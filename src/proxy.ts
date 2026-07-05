@@ -5,7 +5,7 @@ import { verifyToken } from "@/lib/auth/jwt";
 const protectedPaths = ["/dashboard", "/distribusi", "/stok-barang", "/riwayat"];
 const publicPaths = ["/masuk"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 
 	if (publicPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`))) {
@@ -34,7 +34,3 @@ export async function middleware(request: NextRequest) {
 		return NextResponse.redirect(loginUrl);
 	}
 }
-
-export const config = {
-	matcher: ["/dashboard/:path*", "/distribusi/:path*", "/stok-barang/:path*", "/riwayat/:path*", "/masuk"],
-};
