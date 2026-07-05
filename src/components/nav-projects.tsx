@@ -37,7 +37,6 @@ export function NavProjects({
 			<SidebarMenu>
 				{projects.map((item) => (
 					<SidebarMenuItem key={item.name}>
-						{/* Tambahkan tooltip={item.name} agar nama project muncul saat di-hover ketika mengecil */}
 						<SidebarMenuButton tooltip={item.name} render={<a href={item.url} />}>
 							{item.icon}
 							<span>{item.name}</span>

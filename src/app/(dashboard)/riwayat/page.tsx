@@ -229,15 +229,13 @@ export default function Riwayat() {
 									<td className="px-6 py-4">
 										<div className="flex justify-center text-slate-500">
 											{log.source === "web" ? (
-												<MonitorIcon
-													className="w-4 h-4 text-slate-700"
-													title="Web Admin Panel"
-												/>
+												<span title="Web Admin Panel">
+													<MonitorIcon className="w-4 h-4 text-slate-700" />
+												</span>
 											) : (
-												<BotIcon
-													className="w-4 h-4 text-slate-600"
-													title="Automated System / Robot"
-												/>
+												<span title="Automated System / Robot">
+													<BotIcon className="w-4 h-4 text-slate-600" />
+												</span>
 											)}
 										</div>
 									</td>
