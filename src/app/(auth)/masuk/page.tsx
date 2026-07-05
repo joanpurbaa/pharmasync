@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
 	LockIcon,
 	UserIcon,
@@ -10,19 +11,39 @@ import {
 } from "lucide-react";
 
 export default function Masuk() {
-	const [username, setUsername] = useState("");
+	const router = useRouter();
+	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
+	const [errorMessage, setErrorMessage] = useState("");
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
+		setErrorMessage("");
 
-		setTimeout(() => {
+		try {
+			const response = await fetch("/api/auth/login", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email, password }),
+			});
+
+			const data = await response.json().catch(() => null);
+
+			if (!response.ok) {
+				throw new Error(data?.error || "Login gagal. Silakan coba lagi.");
+			}
+
+			router.replace("/dashboard");
+		} catch (error) {
+			setErrorMessage(
+				error instanceof Error ? error.message : "Login gagal. Silakan coba lagi.",
+			);
+		} finally {
 			setIsLoading(false);
-			console.log("Login Admin:", { username, password });
-		}, 1500);
+		}
 	};
 
 	return (
@@ -50,16 +71,16 @@ export default function Masuk() {
 				<form onSubmit={handleSubmit} className="space-y-5">
 					<div className="space-y-1.5">
 						<label className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
-							Username
+							Email
 						</label>
 						<div className="relative">
 							<UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
 							<input
-								type="text"
+								type="email"
 								required
-								placeholder="Masukkan username admin"
-								value={username}
-								onChange={(e) => setUsername(e.target.value)}
+								placeholder="Masukkan email admin"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
 								className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 placeholder:text-slate-400/80 transition-all text-slate-800 font-medium"
 							/>
 						</div>
@@ -92,6 +113,12 @@ export default function Masuk() {
 							</button>
 						</div>
 					</div>
+
+					{errorMessage ? (
+						<p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+							{errorMessage}
+						</p>
+					) : null}
 
 					<button
 						type="submit"
