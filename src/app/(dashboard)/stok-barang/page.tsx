@@ -17,22 +17,7 @@ import {
 } from "lucide-react";
 import AddItemModal from "@/components/AddItemModal";
 import ReceiveStockModal from "@/components/ReceiveStockModal";
-
-interface ApiItem {
-	id: string;
-	name: string;
-	description: string | null;
-	sku: string;
-	category: string;
-	quantity: number;
-	unit: string;
-	status: "AMAN" | "MENIPIS" | "KRITIS";
-	storageCondition: "SUHU_RUANG" | "DINGIN" | "BEKU";
-	isControlledSubstance: boolean;
-	nearestExpiry: string | null;
-	isExpiringSoon: boolean;
-	updatedAt: string;
-}
+import type { ApiItem } from "@/app/types/StokBarang";
 
 const statusLabel: Record<ApiItem["status"], string> = {
 	AMAN: "Aman",
@@ -107,8 +92,8 @@ export default function StokBarang() {
 
 	return (
 		<div className="flex flex-col w-full p-4 sm:p-6 space-y-6">
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<h1 className="text-xl font-semibold tracking-tight text-slate-900">
+			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+				<h1 className="text-xl font-bold tracking-tight text-slate-900">
 					Stok Barang
 				</h1>
 
@@ -162,13 +147,13 @@ export default function StokBarang() {
 				<div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
 					<button
 						onClick={() => setIsReceiveStockOpen(true)}
-						className="inline-flex items-center justify-center gap-2 px-4 py-2.5 lg:py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-sm transition-colors whitespace-nowrap w-full lg:w-auto">
+						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-sm transition-colors whitespace-nowrap w-full lg:w-auto">
 						<PackagePlusIcon className="w-4 h-4" />
 						Terima Barang Masuk
 					</button>
 					<button
 						onClick={() => setIsAddItemOpen(true)}
-						className="inline-flex items-center justify-center gap-2 px-4 py-2.5 lg:py-2 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors whitespace-nowrap w-full lg:w-auto">
+						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors whitespace-nowrap w-full lg:w-auto">
 						<PlusIcon className="w-4 h-4" />
 						Tambah Item Baru
 					</button>

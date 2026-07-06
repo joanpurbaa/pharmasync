@@ -15,8 +15,10 @@ import {
 	ChevronRightIcon,
 	NavigationIcon,
 } from "lucide-react";
+import { ActivityLog, DeliveryCard, ShippingItem } from "@/app/types/Distribusi";
 
-const deliveryCards = [
+
+const deliveryCards: DeliveryCard[] = [
 	{
 		title: "Dijadwalkan",
 		value: "24",
@@ -51,7 +53,7 @@ const deliveryCards = [
 	},
 ];
 
-const shippingList = [
+const shippingList: ShippingItem[] = [
 	{
 		item: "Vaksin Pfizer Comirnaty",
 		id: "#TRX-99201-B",
@@ -102,7 +104,7 @@ const shippingList = [
 	},
 ];
 
-const activityLogs = [
+const activityLogs: ActivityLog[] = [
 	{
 		title: "Pengiriman Selesai",
 		desc: "Vaksin Sinovac tiba di Puskesmas Grogol",
@@ -133,7 +135,7 @@ export default function Distribusi() {
 					<span className="text-[10px] sm:text-xs font-medium text-slate-400 block uppercase tracking-wider">
 						Manajemen Logistik & Rantai Pasok
 					</span>
-					<h1 className="text-lg sm:text-xl font-bold text-slate-900 mt-0.5">
+					<h1 className="text-xl font-bold tracking-tight text-slate-900 mt-0.5">
 						Daftar Pengiriman Aktif
 					</h1>
 				</div>
@@ -163,15 +165,15 @@ export default function Distribusi() {
 					return (
 						<div
 							key={idx}
-							className="p-5 bg-white border border-slate-200/80 rounded-xl shadow-sm relative overflow-hidden">
-							<div className="flex justify-between items-start">
+							className="p-5 bg-white border border-slate-200/80 rounded-xl shadow-sm flex flex-col justify-between">
+							<div className="flex items-start justify-between">
 								<span className="text-sm font-medium text-slate-500">{card.title}</span>
-								<div className={`p-2 rounded-lg ${card.color}`}>
+								<div className={`p-2 rounded-lg ${card.color} shrink-0`}>
 									<Icon className="w-4 h-4" />
 								</div>
 							</div>
 							<div className="mt-4 flex items-baseline gap-2">
-								<span className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+								<span className="text-3xl font-bold tracking-tight text-slate-900">
 									{card.value}
 								</span>
 								{card.change && (
@@ -195,7 +197,7 @@ export default function Distribusi() {
 							<SlidersHorizontalIcon className="w-3.5 h-3.5" />
 							Filter
 						</button>
-						<button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors shadow-sm flex-1 sm:flex-initial">
+						<button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors shadow-sm flex-1 sm:flex-initial">
 							<FileTextIcon className="w-3.5 h-3.5" />
 							Export PDF
 						</button>
@@ -221,7 +223,7 @@ export default function Distribusi() {
 						</thead>
 						<tbody className="divide-y divide-slate-100 text-sm text-slate-700">
 							{shippingList.map((row, idx) => (
-								<tr key={idx} className="hover:bg-slate-50/30 transition-colors">
+								<tr key={idx} className="hover:bg-slate-50/40 transition-colors">
 									<td className="px-6 py-4">
 										<div className="font-semibold text-slate-900">{row.item}</div>
 										<div className="text-xs font-mono text-slate-400 mt-0.5">

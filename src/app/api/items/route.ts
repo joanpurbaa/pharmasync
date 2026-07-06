@@ -11,15 +11,8 @@ function getStockStatus(current: number, critical: number, min: number) {
 export async function GET(request: Request) {
 	const { searchParams } = new URL(request.url);
 	const search = searchParams.get("search") ?? "";
-	const category = searchParams.get("category") ?? "Semua Kategori";
-	const status = searchParams.get("status") ?? "Semua Status";
-
-	const cacheKey = `pharmasync:items:q=${search}:c=${category}:s=${status}`;
-
-	const cachedData = await redis.get(cacheKey);
-	if (cachedData) {
-		return NextResponse.json(cachedData);
-	}
+	const category = searchParams.get("category");
+	const status = searchParams.get("status");
 
 	const items = await db.item.findMany({
 		where: {
@@ -77,10 +70,7 @@ export async function GET(request: Request) {
 				: true,
 		);
 
-	const response = { items: result };
-	await redis.set(cacheKey, response, { ex: 300 });
-
-	return NextResponse.json(response);
+	return NextResponse.json({ items: result });
 }
 
 export async function POST(request: Request) {
@@ -126,6 +116,14 @@ export async function POST(request: Request) {
 		);
 	}
 
+	const user = await db.user.findFirst({ where: { role: "ADMIN" } });
+	if (!user) {
+		return NextResponse.json(
+			{ error: "Tidak ada user admin terdaftar" },
+			{ status: 400 },
+		);
+	}
+
 	const item = await db.item.create({
 		data: {
 			name,
@@ -143,12 +141,18 @@ export async function POST(request: Request) {
 		},
 	});
 
-	await redis.del("pharmasync:categories");
-	const cachePattern = "pharmasync:items:*";
-	const keys = await redis.keys(cachePattern);
-	if (keys.length > 0) {
-		await redis.del(...keys);
-	}
+	await db.auditLog.create({
+		data: {
+			userId: user.id,
+			action: "CREATE_ITEM",
+			entityType: "Item",
+			entityId: item.id,
+			detail: { name: item.name, sku: item.sku },
+			sourceChannel: "WEB",
+		},
+	});
+
+	await redis.del("pharmasync:dashboard:overview");
 
 	return NextResponse.json({ item }, { status: 201 });
 }

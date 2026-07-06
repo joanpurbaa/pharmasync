@@ -21,6 +21,7 @@ import {
   Package,
   Truck,
   History,
+  Users,
 } from "lucide-react";
 
 const teams = [
@@ -42,26 +43,31 @@ const teams = [
 ];
 
 const projects = [
-  {
-    name: "Dashboard",
-    url: "/dashboard",
-    icon: <LayoutDashboard />,
-  },
-  {
-    name: "Stok Barang",
-    url: "/stok-barang",
-    icon: <Package />,
-  },
-  {
-    name: "Distribusi",
-    url: "/distribusi",
-    icon: <Truck />,
-  },
-  {
-    name: "Riwayat",
-    url: "/riwayat",
-    icon: <History />,
-  },
+	{
+		name: "Dashboard",
+		url: "/dashboard",
+		icon: <LayoutDashboard />,
+	},
+	{
+		name: "Stok Barang",
+		url: "/stok-barang",
+		icon: <Package />,
+	},
+	{
+		name: "Distribusi",
+		url: "/distribusi",
+		icon: <Truck />,
+	},
+	{
+		name: "Petugas",
+		url: "/petugas",
+		icon: <Users />,
+	},
+	{
+		name: "Riwayat",
+		url: "/riwayat",
+		icon: <History />,
+	},
 ];
 
 type User = {

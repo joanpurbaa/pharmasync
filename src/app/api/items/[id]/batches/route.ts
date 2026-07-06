@@ -88,11 +88,7 @@ export async function POST(
 		return { batch, item: updatedItem };
 	});
 
-	const cachePattern = "pharmasync:items:*";
-	const keys = await redis.keys(cachePattern);
-	if (keys.length > 0) {
-		await redis.del(...keys);
-	}
+	await redis.del("pharmasync:dashboard:overview");
 
 	return NextResponse.json(result, { status: 201 });
 }

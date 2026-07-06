@@ -2,13 +2,24 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/auth/jwt";
 
-const protectedPaths = ["/dashboard", "/distribusi", "/stok-barang", "/riwayat"];
+const protectedPaths = [
+	"/dashboard",
+	"/distribusi",
+	"/stok-barang",
+	"/riwayat",
+	"/petugas",
+];
+// const protectedPaths = ["/test"];
 const publicPaths = ["/masuk"];
 
 export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 
-	if (publicPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`))) {
+	if (
+		publicPaths.some(
+			(path) => pathname === path || pathname.startsWith(`${path}/`),
+		)
+	) {
 		return NextResponse.next();
 	}
 

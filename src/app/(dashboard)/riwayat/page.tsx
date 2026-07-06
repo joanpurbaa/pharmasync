@@ -14,13 +14,14 @@ import {
 	ShieldCheckIcon,
 	ZapIcon,
 } from "lucide-react";
+import type { AuditStat, SystemMetric, AuditLog } from "@/app/types/Riwayat";
 
-const auditStats = [
+const auditStats: AuditStat[] = [
 	{ text: "84 Transaksi Hari Ini", color: "bg-emerald-500" },
 	{ text: "2 Koreksi Manual", color: "bg-amber-500" },
 ];
 
-const systemMetrics = [
+const systemMetrics: SystemMetric[] = [
 	{
 		title: "Log Terverifikasi",
 		value: "100%",
@@ -36,7 +37,7 @@ const systemMetrics = [
 	},
 ];
 
-const auditLogs = [
+const auditLogs: AuditLog[] = [
 	{
 		date: "14 Okt 2026",
 		time: "09:45:22 WIB",
@@ -111,7 +112,7 @@ export default function Riwayat() {
 		<div className="flex flex-col w-full p-4 sm:p-6 space-y-6">
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3">
-					<h1 className="text-xl font-bold text-slate-900 tracking-tight">
+					<h1 className="text-xl font-bold tracking-tight text-slate-900">
 						Riwayat Audit
 					</h1>
 					<div className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-500 bg-white border border-slate-200 rounded-lg shadow-sm w-fit">
@@ -150,11 +151,11 @@ export default function Riwayat() {
 				</div>
 
 				<div className="flex items-center gap-2 w-full sm:w-auto justify-start sm:justify-end lg:self-auto">
-					<button className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors shadow-sm flex-1 sm:flex-initial">
+					<button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors shadow-sm flex-1 sm:flex-initial">
 						<SlidersHorizontalIcon className="w-3.5 h-3.5" />
 						Filter
 					</button>
-					<button className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors flex-1 sm:flex-initial whitespace-nowrap">
+					<button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors flex-1 sm:flex-initial whitespace-nowrap">
 						<DownloadIcon className="w-3.5 h-3.5" />
 						Ekspor Laporan
 					</button>
@@ -176,7 +177,7 @@ export default function Riwayat() {
 						</thead>
 						<tbody className="divide-y divide-slate-100 text-sm text-slate-700">
 							{auditLogs.map((log, idx) => (
-								<tr key={idx} className="hover:bg-slate-50/30 transition-colors">
+								<tr key={idx} className="hover:bg-slate-50/40 transition-colors">
 									<td className="px-6 py-4">
 										<div className="font-semibold text-slate-900">{log.date}</div>
 										<div className="text-[11px] font-mono text-slate-400 mt-0.5">
@@ -257,19 +258,19 @@ export default function Riwayat() {
 							disabled>
 							<ChevronLeftIcon className="w-4 h-4" />
 						</button>
-						<button className="px-3 py-1 text-xs font-bold rounded bg-slate-900 text-white shadow-sm shrink-0">
+						<button className="px-3 py-1 text-xs font-bold rounded-lg bg-slate-900 text-white shadow-sm shrink-0">
 							1
 						</button>
-						<button className="px-3 py-1 text-xs font-semibold rounded text-slate-600 hover:bg-slate-50 border border-transparent shrink-0">
+						<button className="px-3 py-1 text-xs font-semibold rounded-lg text-slate-600 hover:bg-slate-50 border border-transparent shrink-0">
 							2
 						</button>
-						<button className="px-3 py-1 text-xs font-semibold rounded text-slate-600 hover:bg-slate-50 border border-transparent shrink-0">
+						<button className="px-3 py-1 text-xs font-semibold rounded-lg text-slate-600 hover:bg-slate-50 border border-transparent shrink-0">
 							3
 						</button>
 						<span className="px-1 text-xs text-slate-400 font-medium shrink-0">
 							...
 						</span>
-						<button className="px-3 py-1 text-xs font-semibold rounded text-slate-600 hover:bg-slate-50 border border-transparent shrink-0">
+						<button className="px-3 py-1 text-xs font-semibold rounded-lg text-slate-600 hover:bg-slate-50 border border-transparent shrink-0">
 							124
 						</button>
 						<button className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors shrink-0">
@@ -285,15 +286,17 @@ export default function Riwayat() {
 					return (
 						<div
 							key={idx}
-							className={`p-4 border border-slate-200/70 rounded-xl shadow-sm flex items-center gap-3 ${metric.bg}`}>
-							<div className="p-2.5 rounded-lg bg-white border border-slate-100 shadow-sm text-slate-800 shrink-0">
-								<Icon className="w-4 h-4" />
-							</div>
-							<div className="space-y-0.5">
-								<span className="text-[11px] font-medium text-slate-400 block uppercase tracking-wider">
+							className="p-5 bg-white border border-slate-200/80 rounded-xl shadow-sm flex flex-col justify-between">
+							<div className="flex items-start justify-between">
+								<span className="text-sm font-medium text-slate-500">
 									{metric.title}
 								</span>
-								<span className="text-base font-bold text-slate-900 tracking-tight">
+								<div className="p-2 rounded-lg bg-slate-50 border border-slate-100 text-slate-800 shrink-0">
+									<Icon className="w-4 h-4" />
+								</div>
+							</div>
+							<div className="mt-4">
+								<span className="text-3xl font-bold tracking-tight text-slate-900">
 									{metric.value}
 								</span>
 							</div>
