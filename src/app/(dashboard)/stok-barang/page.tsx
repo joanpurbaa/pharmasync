@@ -6,7 +6,6 @@ import {
 	PlusIcon,
 	PackagePlusIcon,
 	ChevronDownIcon,
-	ChevronLeftIcon,
 	ChevronRightIcon,
 	AlertTriangleIcon,
 	CheckCircle2Icon,
@@ -15,9 +14,29 @@ import {
 	SnowflakeIcon,
 	ShieldAlertIcon,
 } from "lucide-react";
-import AddItemModal from "@/components/AddItemModal";
-import ReceiveStockModal from "@/components/ReceiveStockModal";
-import type { ApiItem } from "@/app/types/StokBarang";
+import AddItemModal from "@/components/modal/AddItemModal";
+import ReceiveStockModal from "@/components/modal/ReceiveStockModal";
+import ItemDetailModal from "@/components/modal/ItemDetailModal";
+import type {
+	ApiItem,
+	Pagination as PaginationData,
+} from "@/app/types/StokBarang";
+import {
+	Pagination,
+	PaginationContent,
+	PaginationEllipsis,
+	PaginationItem,
+	PaginationLink,
+	PaginationNext,
+	PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 
 const statusLabel: Record<ApiItem["status"], string> = {
 	AMAN: "Aman",
@@ -64,14 +83,38 @@ function storageIcon(condition: ApiItem["storageCondition"]) {
 	return null;
 }
 
+function getPageNumbers(
+	current: number,
+	total: number,
+): (number | "ellipsis")[] {
+	const pages: (number | "ellipsis")[] = [];
+	const delta = 1;
+	for (let i = 1; i <= total; i++) {
+		if (
+			i === 1 ||
+			i === total ||
+			(i >= current - delta && i <= current + delta)
+		) {
+			pages.push(i);
+		} else if (pages[pages.length - 1] !== "ellipsis") {
+			pages.push("ellipsis");
+		}
+	}
+	return pages;
+}
+
 export default function StokBarang() {
 	const [items, setItems] = useState<ApiItem[]>([]);
+	const [pagination, setPagination] = useState<PaginationData | null>(null);
+	const [page, setPage] = useState(1);
+	const [pageSize, setPageSize] = useState(10);
 	const [isLoading, setIsLoading] = useState(true);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [categoryFilter, setCategoryFilter] = useState("Semua Kategori");
 	const [statusFilter, setStatusFilter] = useState("Semua Status");
 	const [isAddItemOpen, setIsAddItemOpen] = useState(false);
 	const [isReceiveStockOpen, setIsReceiveStockOpen] = useState(false);
+	const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
 	const fetchItems = useCallback(async () => {
 		setIsLoading(true);
@@ -80,17 +123,33 @@ export default function StokBarang() {
 		if (categoryFilter !== "Semua Kategori")
 			params.set("category", categoryFilter);
 		if (statusFilter !== "Semua Status") params.set("status", statusFilter);
+		params.set("page", String(page));
+		params.set("pageSize", String(pageSize));
 
 		const response = await fetch(`/api/items?${params.toString()}`);
 		const data = await response.json();
 		setItems(data.items ?? []);
+		setPagination(data.pagination ?? null);
 		setIsLoading(false);
-	}, [searchQuery, categoryFilter, statusFilter]);
+	}, [searchQuery, categoryFilter, statusFilter, page, pageSize]);
+
+	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
+		setPage(1);
+	}, [searchQuery, categoryFilter, statusFilter, pageSize]);
 
 	useEffect(() => {
 		const timeout = setTimeout(fetchItems, 300);
 		return () => clearTimeout(timeout);
 	}, [fetchItems]);
+
+	const rangeStart =
+		pagination && pagination.totalItems > 0
+			? (pagination.page - 1) * pagination.pageSize + 1
+			: 0;
+	const rangeEnd = pagination
+		? Math.min(pagination.page * pagination.pageSize, pagination.totalItems)
+		: 0;
 
 	return (
 		<div className="flex flex-col w-full p-4 sm:p-6 space-y-6">
@@ -164,7 +223,7 @@ export default function StokBarang() {
 
 			<div className="bg-white border border-slate-200/80 rounded-xl shadow-sm overflow-hidden flex flex-col justify-between">
 				<div className="overflow-x-auto w-full">
-					<table className="w-full text-left border-collapse min-w-[900px]">
+					<table className="w-full text-left border-collapse min-w-[980px]">
 						<thead>
 							<tr className="bg-slate-50/70 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400">
 								<th className="px-6 py-3.5">Nama Item</th>
@@ -173,14 +232,15 @@ export default function StokBarang() {
 								<th className="px-6 py-3.5">Stok Saat Ini</th>
 								<th className="px-6 py-3.5">Status</th>
 								<th className="px-6 py-3.5">Kadaluarsa Terdekat</th>
-								<th className="px-6 py-3.5 text-right">Update Terakhir</th>
+								<th className="px-6 py-3.5">Update Terakhir</th>
+								<th className="px-6 py-3.5 text-right">Aksi</th>
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-slate-100 text-sm text-slate-700">
 							{isLoading && (
 								<tr>
 									<td
-										colSpan={7}
+										colSpan={8}
 										className="px-6 py-8 text-center text-sm text-slate-400">
 										Memuat data...
 									</td>
@@ -190,7 +250,7 @@ export default function StokBarang() {
 							{!isLoading && items.length === 0 && (
 								<tr>
 									<td
-										colSpan={7}
+										colSpan={8}
 										className="px-6 py-8 text-center text-sm text-slate-400">
 										Belum ada item yang cocok dengan filter ini.
 									</td>
@@ -269,8 +329,17 @@ export default function StokBarang() {
 											)}
 										</td>
 
-										<td className="px-6 py-4 text-right text-xs text-slate-400 font-medium">
+										<td className="px-6 py-4 text-xs text-slate-400 font-medium">
 											{formatRelativeTime(item.updatedAt)}
+										</td>
+
+										<td className="px-6 py-4 text-right">
+											<button
+												onClick={() => setSelectedItemId(item.id)}
+												className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+												Detail
+												<ChevronRightIcon className="w-3.5 h-3.5" />
+											</button>
 										</td>
 									</tr>
 								))}
@@ -278,21 +347,105 @@ export default function StokBarang() {
 					</table>
 				</div>
 
-				<div className="p-4 bg-white border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-					<span className="text-xs text-slate-500 font-medium text-center sm:text-left">
-						Menampilkan{" "}
-						<span className="font-bold text-slate-700">{items.length}</span> item
-					</span>
-					<div className="inline-flex items-center gap-1.5">
-						<button
-							className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 disabled:opacity-50 transition-colors"
-							disabled>
-							<ChevronLeftIcon className="w-4 h-4" />
-						</button>
-						<button className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 transition-colors">
-							<ChevronRightIcon className="w-4 h-4" />
-						</button>
+				<div className="p-4 bg-white border-t border-slate-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+					<div className="flex items-center gap-4 order-2 lg:order-1">
+						<span className="text-xs text-slate-500 font-medium text-center sm:text-left">
+							{pagination && pagination.totalItems > 0 ? (
+								<>
+									Menampilkan{" "}
+									<span className="font-bold text-slate-700">
+										{rangeStart}-{rangeEnd}
+									</span>{" "}
+									dari{" "}
+									<span className="font-bold text-slate-700">
+										{pagination.totalItems}
+									</span>{" "}
+									item
+								</>
+							) : (
+								<>
+									Menampilkan{" "}
+									<span className="font-bold text-slate-700">{items.length}</span> item
+								</>
+							)}
+						</span>
+
+						<div className="flex items-center gap-2">
+							<span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+								Baris per halaman
+							</span>
+							<Select
+								value={String(pageSize)}
+								onValueChange={(value) => setPageSize(Number(value))}>
+								<SelectTrigger className="h-8 w-[72px] text-xs">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="10">10</SelectItem>
+									<SelectItem value="25">25</SelectItem>
+									<SelectItem value="50">50</SelectItem>
+									<SelectItem value="100">100</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
 					</div>
+
+					<Pagination className="order-1 lg:order-2 mx-0 w-auto">
+						<PaginationContent>
+							<PaginationItem>
+								<PaginationPrevious
+									href="#"
+									onClick={(e) => {
+										e.preventDefault();
+										if (pagination && pagination.page > 1) setPage(pagination.page - 1);
+									}}
+									className={
+										!pagination || pagination.page <= 1
+											? "pointer-events-none opacity-50"
+											: ""
+									}
+								/>
+							</PaginationItem>
+
+							{pagination &&
+								getPageNumbers(pagination.page, pagination.totalPages).map(
+									(pageNumber, idx) =>
+										pageNumber === "ellipsis" ? (
+											<PaginationItem key={`ellipsis-${idx}`}>
+												<PaginationEllipsis />
+											</PaginationItem>
+										) : (
+											<PaginationItem key={pageNumber}>
+												<PaginationLink
+													href="#"
+													isActive={pageNumber === pagination.page}
+													onClick={(e) => {
+														e.preventDefault();
+														setPage(pageNumber);
+													}}>
+													{pageNumber}
+												</PaginationLink>
+											</PaginationItem>
+										),
+								)}
+
+							<PaginationItem>
+								<PaginationNext
+									href="#"
+									onClick={(e) => {
+										e.preventDefault();
+										if (pagination && pagination.page < pagination.totalPages)
+											setPage(pagination.page + 1);
+									}}
+									className={
+										!pagination || pagination.page >= pagination.totalPages
+											? "pointer-events-none opacity-50"
+											: ""
+									}
+								/>
+							</PaginationItem>
+						</PaginationContent>
+					</Pagination>
 				</div>
 			</div>
 
@@ -300,12 +453,19 @@ export default function StokBarang() {
 				<AddItemModal
 					onClose={() => setIsAddItemOpen(false)}
 					onSuccess={fetchItems}
+					isOpen={false}
 				/>
 			)}
 			{isReceiveStockOpen && (
 				<ReceiveStockModal
 					onClose={() => setIsReceiveStockOpen(false)}
 					onSuccess={fetchItems}
+				/>
+			)}
+			{selectedItemId && (
+				<ItemDetailModal
+					itemId={selectedItemId}
+					onClose={() => setSelectedItemId(null)}
 				/>
 			)}
 		</div>

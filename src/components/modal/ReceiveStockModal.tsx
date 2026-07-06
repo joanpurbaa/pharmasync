@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
-import { XIcon, SearchIcon } from "lucide-react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
+import { XIcon, SearchIcon, Check, ChevronsUpDown } from "lucide-react";
 
 interface ItemOption {
 	id: string;
@@ -39,6 +39,8 @@ export default function ReceiveStockModal({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+	const dropdownRef = useRef<HTMLDivElement>(null);
+
 	const resetForm = useCallback(() => {
 		setFormData(initialFormData);
 		setSelectedItem(presetItem);
@@ -50,16 +52,35 @@ export default function ReceiveStockModal({
 	}, [presetItem]);
 
 	useEffect(() => {
+		function handleClickOutside(event: MouseEvent) {
+			if (
+				dropdownRef.current &&
+				!dropdownRef.current.contains(event.target as Node)
+			) {
+				setShowResults(false);
+			}
+		}
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, []);
+
+	useEffect(() => {
 		if (!itemSearch) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
+			setSearchResults([]);
 			return;
 		}
 
 		const timeout = setTimeout(async () => {
-			const response = await fetch(
-				`/api/items?search=${encodeURIComponent(itemSearch)}`,
-			);
-			const data = await response.json();
-			setSearchResults(data.items ?? []);
+			try {
+				const response = await fetch(
+					`/api/items?search=${encodeURIComponent(itemSearch)}`,
+				);
+				const data = await response.json();
+				setSearchResults(data.items ?? []);
+			} catch {
+				setSearchResults([]);
+			}
 		}, 300);
 
 		return () => clearTimeout(timeout);
@@ -118,7 +139,8 @@ export default function ReceiveStockModal({
 							Terima Barang Masuk
 						</h2>
 						<p className="text-xs text-slate-400 font-medium mt-0.5">
-							Pilih item yang sudah di-setup sebagai pending, lalu catat batch barang yang sudah tiba di gudang.
+							Pilih item yang sudah di-setup sebagai pending, lalu catat batch barang
+							yang sudah tiba di gudang.
 						</p>
 					</div>
 					<button
@@ -138,40 +160,42 @@ export default function ReceiveStockModal({
 					)}
 
 					{!presetItem && (
-						<div className="flex flex-col space-y-1 relative">
+						<div className="flex flex-col space-y-1" ref={dropdownRef}>
 							<label className="text-xs font-semibold text-slate-500">
 								Item <span className="text-red-500">*</span>
 							</label>
-							{selectedItem ? (
-								<div className="flex items-center justify-between px-3 py-2 border border-slate-200 rounded-lg bg-slate-50">
-									<div>
-										<div className="text-sm font-medium text-slate-800">
-											{selectedItem.name}
+
+							<div className="relative">
+								<button
+									type="button"
+									onClick={() => setShowResults(!showResults)}
+									className="flex h-10 w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all">
+									{selectedItem ? (
+										<span className="truncate font-medium">
+											{selectedItem.name}{" "}
+											<span className="text-xs font-mono text-slate-400">
+												({selectedItem.sku})
+											</span>
+										</span>
+									) : (
+										<span className="text-slate-400">Pilih item...</span>
+									)}
+									<ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50 text-slate-500" />
+								</button>
+
+								{showResults && (
+									<div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-100">
+										<div className="flex items-center border-b border-slate-100 px-3">
+											<SearchIcon className="mr-2 h-4 w-4 shrink-0 opacity-50 text-slate-500" />
+											<input
+												type="text"
+												placeholder="Cari SKU atau nama item..."
+												value={itemSearch}
+												onChange={(e) => setItemSearch(e.target.value)}
+												className="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+											/>
 										</div>
-										<div className="text-xs font-mono text-slate-400">
-											{selectedItem.sku}
-										</div>
-									</div>
-									<button
-										type="button"
-										onClick={() => setSelectedItem(null)}
-										className="text-xs text-slate-400 hover:text-slate-700">
-										Ganti
-									</button>
-								</div>
-							) : (
-								<div className="relative">
-									<SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-									<input
-										type="text"
-										placeholder="Cari SKU atau nama item..."
-										value={itemSearch}
-										onChange={(e) => setItemSearch(e.target.value)}
-										onFocus={() => setShowResults(true)}
-										className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all"
-									/>
-									{showResults && itemSearch && (
-										<div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+										<div className="max-h-48 overflow-y-auto p-1">
 											{searchResults.map((item) => (
 												<button
 													type="button"
@@ -181,21 +205,35 @@ export default function ReceiveStockModal({
 														setShowResults(false);
 														setItemSearch("");
 													}}
-													className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 border-b border-slate-50 last:border-0">
-													<div className="font-medium text-slate-800">{item.name}</div>
-													<div className="text-xs font-mono text-slate-400">{item.sku}</div>
+													className="relative flex w-full cursor-pointer select-none items-center rounded-md px-2 py-2 text-sm text-slate-800 outline-none hover:bg-slate-50 transition-colors text-left">
+													<div className="flex flex-col flex-1 min-w-0 pr-6">
+														<span className="font-medium truncate text-slate-800">
+															{item.name}
+														</span>
+														<span className="text-xs font-mono text-slate-400 mt-0.5">
+															{item.sku}
+														</span>
+													</div>
+													{selectedItem?.id === item.id && (
+														<Check className="absolute right-2 h-4 w-4 text-slate-800" />
+													)}
 												</button>
 											))}
-											{searchResults.length === 0 && (
-												<div className="px-3 py-2 text-xs text-slate-400">
+											{itemSearch && searchResults.length === 0 && (
+												<div className="py-6 text-center text-xs text-slate-400">
 													Item tidak ditemukan. Daftarkan lewat &quot;Tambah Item Baru&quot;
 													dulu.
 												</div>
 											)}
+											{!itemSearch && (
+												<div className="py-4 text-center text-xs text-slate-400">
+													Ketik untuk mulai mencari produk...
+												</div>
+											)}
 										</div>
-									)}
-								</div>
-							)}
+									</div>
+								)}
+							</div>
 						</div>
 					)}
 

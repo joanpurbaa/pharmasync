@@ -3,10 +3,10 @@ import { db } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 
 const statusPriority: Record<string, number> = {
-	KRITIS: 0,
-	PENDING: 1,
-	MENIPIS: 2,
-	AMAN: 3,
+	MENIPIS: 0,
+	KRITIS: 1,
+	AMAN: 2,
+	PENDING: 3,
 };
 
 type StockStatus = "AMAN" | "MENIPIS" | "KRITIS" | "PENDING";
@@ -22,6 +22,11 @@ export async function GET(request: Request) {
 	const search = searchParams.get("search") ?? "";
 	const category = searchParams.get("category");
 	const status = searchParams.get("status");
+	const page = Math.max(1, Number(searchParams.get("page")) || 1);
+	const pageSize = Math.min(
+		100,
+		Math.max(1, Number(searchParams.get("pageSize")) || 10),
+	);
 
 	const items = await db.item.findMany({
 		where: {
@@ -44,16 +49,16 @@ export async function GET(request: Request) {
 		orderBy: { updatedAt: "desc" },
 	});
 
-	const result = items
+	const mapped = items
 		.map((item) => {
 			const hasPendingSetup = item.currentStock === 0 && item.batches.length === 0;
 			const stockStatus: StockStatus = hasPendingSetup
 				? "PENDING"
 				: getStockStatus(
-					item.currentStock,
-					item.criticalThreshold,
-					item.minThreshold,
-				);
+						item.currentStock,
+						item.criticalThreshold,
+						item.minThreshold,
+					);
 			const nearestBatch = item.batches[0] ?? null;
 			const isExpiringSoon = nearestBatch
 				? nearestBatch.expiryDate.getTime() - Date.now() <=
@@ -85,12 +90,24 @@ export async function GET(request: Request) {
 			const priorityA = statusPriority[a.status] ?? 3;
 			const priorityB = statusPriority[b.status] ?? 3;
 			if (priorityA !== priorityB) return priorityA - priorityB;
-			return (
-				new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-			);
+			return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
 		});
 
-	return NextResponse.json({ items: result });
+	const totalItems = mapped.length;
+	const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+	const safePage = Math.min(page, totalPages);
+	const start = (safePage - 1) * pageSize;
+	const paginated = mapped.slice(start, start + pageSize);
+
+	return NextResponse.json({
+		items: paginated,
+		pagination: {
+			page: safePage,
+			pageSize,
+			totalItems,
+			totalPages,
+		},
+	});
 }
 
 export async function POST(request: Request) {
