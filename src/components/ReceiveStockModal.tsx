@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { XIcon, SearchIcon } from "lucide-react";
 
 interface ItemOption {
@@ -10,14 +10,20 @@ interface ItemOption {
 }
 
 interface ReceiveStockModalProps {
-	isOpen: boolean;
 	onClose: () => void;
 	onSuccess?: () => void;
 	presetItem?: ItemOption | null;
 }
 
+const initialFormData = {
+	batchNumber: "",
+	expiryDate: "",
+	quantityReceived: "",
+	vendorName: "",
+	note: "",
+};
+
 export default function ReceiveStockModal({
-	isOpen,
 	onClose,
 	onSuccess,
 	presetItem = null,
@@ -29,22 +35,25 @@ export default function ReceiveStockModal({
 	const [searchResults, setSearchResults] = useState<ItemOption[]>([]);
 	const [showResults, setShowResults] = useState(false);
 
-	const [formData, setFormData] = useState({
-		batchNumber: "",
-		expiryDate: "",
-		quantityReceived: "",
-		vendorName: "",
-		note: "",
-	});
+	const [formData, setFormData] = useState(initialFormData);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+	const resetForm = useCallback(() => {
+		setFormData(initialFormData);
+		setSelectedItem(presetItem);
+		setItemSearch("");
+		setSearchResults([]);
+		setShowResults(false);
+		setErrorMessage(null);
+		setIsSubmitting(false);
+	}, [presetItem]);
+
 	useEffect(() => {
 		if (!itemSearch) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect
-			setSearchResults([]);
 			return;
 		}
+
 		const timeout = setTimeout(async () => {
 			const response = await fetch(
 				`/api/items?search=${encodeURIComponent(itemSearch)}`,
@@ -52,21 +61,9 @@ export default function ReceiveStockModal({
 			const data = await response.json();
 			setSearchResults(data.items ?? []);
 		}, 300);
+
 		return () => clearTimeout(timeout);
 	}, [itemSearch]);
-
-	if (!isOpen) return null;
-
-	const resetForm = () => {
-		setFormData({
-			batchNumber: "",
-			expiryDate: "",
-			quantityReceived: "",
-			vendorName: "",
-			note: "",
-		});
-		setSelectedItem(presetItem);
-	};
 
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -121,7 +118,7 @@ export default function ReceiveStockModal({
 							Terima Barang Masuk
 						</h2>
 						<p className="text-xs text-slate-400 font-medium mt-0.5">
-							Catat batch baru dari vendor/supplier ke gudang.
+							Pilih item yang sudah di-setup sebagai pending, lalu catat batch barang yang sudah tiba di gudang.
 						</p>
 					</div>
 					<button

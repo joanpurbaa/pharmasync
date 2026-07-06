@@ -23,12 +23,14 @@ const statusLabel: Record<ApiItem["status"], string> = {
 	AMAN: "Aman",
 	MENIPIS: "Menipis",
 	KRITIS: "Kritis",
+	PENDING: "Pending Setup",
 };
 
 const statusStyle: Record<ApiItem["status"], string> = {
 	AMAN: "bg-emerald-50 text-emerald-700 border border-emerald-100",
 	MENIPIS: "bg-amber-50 text-amber-700 border border-amber-100",
 	KRITIS: "bg-red-50 text-red-700 border border-red-100",
+	PENDING: "bg-slate-100 text-slate-700 border border-slate-200",
 };
 
 function formatRelativeTime(dateString: string) {
@@ -294,16 +296,18 @@ export default function StokBarang() {
 				</div>
 			</div>
 
-			<AddItemModal
-				isOpen={isAddItemOpen}
-				onClose={() => setIsAddItemOpen(false)}
-				onSuccess={fetchItems}
-			/>
-			<ReceiveStockModal
-				isOpen={isReceiveStockOpen}
-				onClose={() => setIsReceiveStockOpen(false)}
-				onSuccess={fetchItems}
-			/>
+			{isAddItemOpen && (
+				<AddItemModal
+					onClose={() => setIsAddItemOpen(false)}
+					onSuccess={fetchItems}
+				/>
+			)}
+			{isReceiveStockOpen && (
+				<ReceiveStockModal
+					onClose={() => setIsReceiveStockOpen(false)}
+					onSuccess={fetchItems}
+				/>
+			)}
 		</div>
 	);
 }

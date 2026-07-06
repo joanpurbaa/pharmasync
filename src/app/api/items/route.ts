@@ -2,6 +2,15 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 
+const statusPriority: Record<string, number> = {
+	KRITIS: 0,
+	PENDING: 1,
+	MENIPIS: 2,
+	AMAN: 3,
+};
+
+type StockStatus = "AMAN" | "MENIPIS" | "KRITIS" | "PENDING";
+
 function getStockStatus(current: number, critical: number, min: number) {
 	if (current <= critical) return "KRITIS";
 	if (current <= min) return "MENIPIS";
@@ -37,11 +46,14 @@ export async function GET(request: Request) {
 
 	const result = items
 		.map((item) => {
-			const stockStatus = getStockStatus(
-				item.currentStock,
-				item.criticalThreshold,
-				item.minThreshold,
-			);
+			const hasPendingSetup = item.currentStock === 0 && item.batches.length === 0;
+			const stockStatus: StockStatus = hasPendingSetup
+				? "PENDING"
+				: getStockStatus(
+					item.currentStock,
+					item.criticalThreshold,
+					item.minThreshold,
+				);
 			const nearestBatch = item.batches[0] ?? null;
 			const isExpiringSoon = nearestBatch
 				? nearestBatch.expiryDate.getTime() - Date.now() <=
@@ -68,7 +80,15 @@ export async function GET(request: Request) {
 			status && status !== "Semua Status"
 				? item.status === status.toUpperCase()
 				: true,
-		);
+		)
+		.sort((a, b) => {
+			const priorityA = statusPriority[a.status] ?? 3;
+			const priorityB = statusPriority[b.status] ?? 3;
+			if (priorityA !== priorityB) return priorityA - priorityB;
+			return (
+				new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+			);
+		});
 
 	return NextResponse.json({ items: result });
 }
