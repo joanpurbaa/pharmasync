@@ -6,182 +6,119 @@ import { NavProjects } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
 import {
-	Sidebar,
-	SidebarContent,
-	SidebarFooter,
-	SidebarHeader,
-	SidebarRail,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
 } from "@/components/ui/sidebar";
+
 import {
-	GalleryVerticalEndIcon,
-	AudioLinesIcon,
-	TerminalIcon,
-	LayoutDashboard,
-	Package,
-	Truck,
+  GalleryVerticalEndIcon,
+  AudioLinesIcon,
+  TerminalIcon,
+  LayoutDashboard,
+  Package,
+  Truck,
   History,
 } from "lucide-react";
 
-const data = {
-	user: {
-		name: "shadcn",
-		email: "m@example.com",
-		avatar: "/avatars/shadcn.jpg",
-	},
-	teams: [
-		{
-			name: "Pharmasync",
-			logo: <GalleryVerticalEndIcon />,
-			plan: "Supply chain",
-		},
-		{
-			name: "Pharmasync",
-			logo: <AudioLinesIcon />,
-			plan: "Startup",
-		},
-		{
-			name: "Evil Corp.",
-			logo: <TerminalIcon />,
-			plan: "Free",
-		},
-	],
-	// navMain: [
-	//   {
-	//     title: "Playground",
-	//     url: "#",
-	//     icon: (
-	//       <TerminalSquareIcon
-	//       />
-	//     ),
-	//     isActive: true,
-	//     items: [
-	//       {
-	//         title: "History",
-	//         url: "#",
-	//       },
-	//       {
-	//         title: "Starred",
-	//         url: "#",
-	//       },
-	//       {
-	//         title: "Settings",
-	//         url: "#",
-	//       },
-	//     ],
-	//   },
-	//   {
-	//     title: "Models",
-	//     url: "#",
-	//     icon: (
-	//       <BotIcon
-	//       />
-	//     ),
-	//     items: [
-	//       {
-	//         title: "Genesis",
-	//         url: "#",
-	//       },
-	//       {
-	//         title: "Explorer",
-	//         url: "#",
-	//       },
-	//       {
-	//         title: "Quantum",
-	//         url: "#",
-	//       },
-	//     ],
-	//   },
-	//   {
-	//     title: "Documentation",
-	//     url: "#",
-	//     icon: (
-	//       <BookOpenIcon
-	//       />
-	//     ),
-	//     items: [
-	//       {
-	//         title: "Introduction",
-	//         url: "#",
-	//       },
-	//       {
-	//         title: "Get Started",
-	//         url: "#",
-	//       },
-	//       {
-	//         title: "Tutorials",
-	//         url: "#",
-	//       },
-	//       {
-	//         title: "Changelog",
-	//         url: "#",
-	//       },
-	//     ],
-	//   },
-	//   {
-	//     title: "Settings",
-	//     url: "#",
-	//     icon: (
-	//       <Settings2Icon
-	//       />
-	//     ),
-	//     items: [
-	//       {
-	//         title: "General",
-	//         url: "#",
-	//       },
-	//       {
-	//         title: "Team",
-	//         url: "#",
-	//       },
-	//       {
-	//         title: "Billing",
-	//         url: "#",
-	//       },
-	//       {
-	//         title: "Limits",
-	//         url: "#",
-	//       },
-	//     ],
-	//   },
-	// ],
-	projects: [
-		{
-			name: "Dashboard",
-			url: "/dashboard",
-			icon: <LayoutDashboard />,
-		},
-		{
-			name: "Stok Barang",
-			url: "/stok-barang",
-			icon: <Package />,
-		},
-		{
-			name: "Distribusi",
-			url: "/distribusi",
-			icon: <Truck />,
-		},
-		{
-			name: "Riwayat",
-			url: "/riwayat",
-			icon: <History />,
-		},
-	],
+const teams = [
+  {
+    name: "Pharmasync",
+    logo: <GalleryVerticalEndIcon />,
+    plan: "Supply chain",
+  },
+  {
+    name: "Pharmasync",
+    logo: <AudioLinesIcon />,
+    plan: "Startup",
+  },
+  {
+    name: "Evil Corp.",
+    logo: <TerminalIcon />,
+    plan: "Free",
+  },
+];
+
+const projects = [
+  {
+    name: "Dashboard",
+    url: "/dashboard",
+    icon: <LayoutDashboard />,
+  },
+  {
+    name: "Stok Barang",
+    url: "/stok-barang",
+    icon: <Package />,
+  },
+  {
+    name: "Distribusi",
+    url: "/distribusi",
+    icon: <Truck />,
+  },
+  {
+    name: "Riwayat",
+    url: "/riwayat",
+    icon: <History />,
+  },
+];
+
+type User = {
+  name: string;
+  email: string;
+  avatar: string;
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-	return (
-		<Sidebar collapsible="icon" {...props}>
-			<SidebarHeader>
-				<TeamSwitcher teams={data.teams} />
-			</SidebarHeader>
-			<SidebarContent>
-				{/* <NavMain items={data.navMain} /> */}
-				<NavProjects projects={data.projects} />
-			</SidebarContent>
-			<SidebarFooter>
-				<NavUser user={data.user} />
-			</SidebarFooter>
-			<SidebarRail />
-		</Sidebar>
-	);
+export function AppSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = React.useState<User>({
+    name: "Loading...",
+    email: "Loading...",
+    avatar: "",
+  });
+
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
+          cache: "no-store",
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        setUser({
+          name: data.name,
+          email: data.email,
+          avatar: "",
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  return (
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <TeamSwitcher teams={teams} />
+      </SidebarHeader>
+
+      <SidebarContent>
+        <NavProjects projects={projects} />
+      </SidebarContent>
+
+      <SidebarFooter>
+        <NavUser user={user} />
+      </SidebarFooter>
+
+      <SidebarRail />
+    </Sidebar>
+  );
 }
