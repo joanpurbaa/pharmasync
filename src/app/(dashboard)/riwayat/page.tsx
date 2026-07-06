@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
 	SearchIcon,
 	SlidersHorizontalIcon,
@@ -14,12 +14,11 @@ import {
 	ShieldCheckIcon,
 	ZapIcon,
 } from "lucide-react";
-import type { AuditStat, SystemMetric, AuditLog } from "@/app/types/Riwayat";
-
-const auditStats: AuditStat[] = [
-	{ text: "84 Transaksi Hari Ini", color: "bg-emerald-500" },
-	{ text: "2 Koreksi Manual", color: "bg-amber-500" },
-];
+import type {
+	AuditLog,
+	AuditLogStats,
+	SystemMetric,
+} from "@/app/types/Riwayat";
 
 const systemMetrics: SystemMetric[] = [
 	{
@@ -37,76 +36,55 @@ const systemMetrics: SystemMetric[] = [
 	},
 ];
 
-const auditLogs: AuditLog[] = [
-	{
-		date: "14 Okt 2026",
-		time: "09:45:22 WIB",
-		user: "Budi Nugraha",
-		initials: "BN",
-		action: "Penambahan",
-		actionType: "addition",
-		targetItem: "Paracetamol 500mg",
-		targetDetail: "Batch: #PRC-2023-01",
-		change: "+500 Unit",
-		changeType: "positive",
-		source: "web",
-	},
-	{
-		date: "14 Okt 2026",
-		time: "08:12:05 WIB",
-		user: "Siti Yasmin",
-		initials: "SY",
-		action: "Distribusi",
-		actionType: "distribution",
-		targetItem: "Masker Bedah 3-Ply",
-		targetDetail: "Poli Kandungan",
-		change: "-20 Box",
-		changeType: "negative",
-		source: "system",
-	},
-	{
-		date: "13 Okt 2026",
-		time: "17:30:11 WIB",
-		user: "Admin Utama",
-		initials: "AD",
-		action: "Koreksi",
-		actionType: "correction",
-		targetItem: "Amoxicillin Syruup",
-		targetDetail: "Expired Adjustments",
-		change: "-5 Unit",
-		changeType: "negative",
-		source: "web",
-	},
-	{
-		date: "13 Okt 2026",
-		time: "14:22:45 WIB",
-		user: "Rahmat Nur",
-		initials: "RN",
-		action: "Pengurangan",
-		actionType: "reduction",
-		targetItem: "Infusion Set (Adult)",
-		targetDetail: "Unit Gawat Darurat",
-		change: "-15 Set",
-		changeType: "negative",
-		source: "system",
-	},
-	{
-		date: "13 Okt 2026",
-		time: "10:05:30 WIB",
-		user: "Budi Nugraha",
-		initials: "BN",
-		action: "Penambahan",
-		actionType: "addition",
-		targetItem: "Spuit 3cc",
-		targetDetail: "Vendor: Medika Jaya",
-		change: "+1000 Unit",
-		changeType: "positive",
-		source: "web",
-	},
-];
+const PAGE_SIZE = 10;
+
+function getPageNumbers(current: number, total: number) {
+	if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+	if (current <= 4) return [1, 2, 3, 4, 5, "...", total];
+	if (current >= total - 3)
+		return [1, "...", total - 4, total - 3, total - 2, total - 1, total];
+	return [1, "...", current - 1, current, current + 1, "...", total];
+}
 
 export default function Riwayat() {
 	const [searchQuery, setSearchQuery] = useState("");
+	const [page, setPage] = useState(1);
+	const [logs, setLogs] = useState<AuditLog[]>([]);
+	const [total, setTotal] = useState(0);
+	const [stats, setStats] = useState<AuditLogStats>({
+		todayCount: 0,
+		manualCorrections: 0,
+	});
+	const [isLoading, setIsLoading] = useState(true);
+
+	const fetchAuditLogs = useCallback(async () => {
+		setIsLoading(true);
+		const params = new URLSearchParams();
+		if (searchQuery) params.set("search", searchQuery);
+		params.set("page", String(page));
+		params.set("pageSize", String(PAGE_SIZE));
+
+		const response = await fetch(`/api/audit-logs?${params.toString()}`);
+		const data = await response.json();
+		setLogs(data.logs ?? []);
+		setTotal(data.total ?? 0);
+		setStats(data.stats ?? { todayCount: 0, manualCorrections: 0 });
+		setIsLoading(false);
+	}, [searchQuery, page]);
+
+	useEffect(() => {
+		const timeout = setTimeout(fetchAuditLogs, 300);
+		return () => clearTimeout(timeout);
+	}, [fetchAuditLogs]);
+
+	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
+		setPage(1);
+	}, [searchQuery]);
+
+	const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
+	const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+	const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
 	return (
 		<div className="flex flex-col w-full p-4 sm:p-6 space-y-6">
@@ -139,14 +117,14 @@ export default function Riwayat() {
 						Pantau seluruh aktivitas inventaris medis secara kronologis.
 					</p>
 					<div className="flex flex-wrap gap-2">
-						{auditStats.map((stat, idx) => (
-							<span
-								key={idx}
-								className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-full text-slate-700 shadow-sm">
-								<span className={`h-2 w-2 rounded-full ${stat.color}`} />
-								{stat.text}
-							</span>
-						))}
+						<span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-full text-slate-700 shadow-sm">
+							<span className="h-2 w-2 rounded-full bg-emerald-500" />
+							{stats.todayCount} Transaksi Hari Ini
+						</span>
+						<span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-full text-slate-700 shadow-sm">
+							<span className="h-2 w-2 rounded-full bg-amber-500" />
+							{stats.manualCorrections} Koreksi Manual
+						</span>
 					</div>
 				</div>
 
@@ -176,104 +154,145 @@ export default function Riwayat() {
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-							{auditLogs.map((log, idx) => (
-								<tr key={idx} className="hover:bg-slate-50/40 transition-colors">
-									<td className="px-6 py-4">
-										<div className="font-semibold text-slate-900">{log.date}</div>
-										<div className="text-[11px] font-mono text-slate-400 mt-0.5">
-											{log.time}
-										</div>
-									</td>
-
-									<td className="px-6 py-4">
-										<div className="flex items-center gap-2.5">
-											<div className="h-7 w-7 rounded bg-slate-900 flex items-center justify-center text-[11px] font-bold text-white uppercase tracking-wider shrink-0">
-												{log.initials}
-											</div>
-											<span className="font-semibold text-slate-800 whitespace-nowrap">
-												{log.user}
-											</span>
-										</div>
-									</td>
-
-									<td className="px-6 py-4">
-										<span
-											className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${
-												log.actionType === "addition"
-													? "bg-emerald-50 text-emerald-700 border border-emerald-100/50"
-													: log.actionType === "distribution"
-														? "bg-blue-50 text-blue-700 border border-blue-100/50"
-														: log.actionType === "correction"
-															? "bg-amber-50 text-amber-700 border border-amber-100/50"
-															: "bg-red-50 text-red-700 border border-red-100/50"
-											}`}>
-											{log.action}
-										</span>
-									</td>
-
-									<td className="px-6 py-4">
-										<div className="font-semibold text-slate-900">{log.targetItem}</div>
-										<div className="text-xs text-slate-400 mt-0.5">
-											{log.targetDetail}
-										</div>
-									</td>
-
-									<td className="px-6 py-4 font-bold">
-										<span
-											className={
-												log.changeType === "positive" ? "text-emerald-600" : "text-blue-600"
-											}>
-											{log.change}
-										</span>
-									</td>
-
-									<td className="px-6 py-4">
-										<div className="flex justify-center text-slate-500">
-											{log.source === "web" ? (
-												<span title="Web Admin Panel">
-													<MonitorIcon className="w-4 h-4 text-slate-700" />
-												</span>
-											) : (
-												<span title="Automated System / Robot">
-													<BotIcon className="w-4 h-4 text-slate-600" />
-												</span>
-											)}
-										</div>
+							{isLoading && (
+								<tr>
+									<td
+										colSpan={6}
+										className="px-6 py-8 text-center text-sm text-slate-400">
+										Memuat data...
 									</td>
 								</tr>
-							))}
+							)}
+
+							{!isLoading && logs.length === 0 && (
+								<tr>
+									<td
+										colSpan={6}
+										className="px-6 py-8 text-center text-sm text-slate-400">
+										Tidak ada log yang cocok dengan pencarian ini.
+									</td>
+								</tr>
+							)}
+
+							{!isLoading &&
+								logs.map((log, idx) => (
+									<tr key={idx} className="hover:bg-slate-50/40 transition-colors">
+										<td className="px-6 py-4">
+											<div className="font-semibold text-slate-900">{log.date}</div>
+											<div className="text-[11px] font-mono text-slate-400 mt-0.5">
+												{log.time}
+											</div>
+										</td>
+
+										<td className="px-6 py-4">
+											<div className="flex items-center gap-2.5">
+												<div className="h-7 w-7 rounded bg-slate-900 flex items-center justify-center text-[11px] font-bold text-white uppercase tracking-wider shrink-0">
+													{log.initials}
+												</div>
+												<span className="font-semibold text-slate-800 whitespace-nowrap">
+													{log.user}
+												</span>
+											</div>
+										</td>
+
+										<td className="px-6 py-4">
+											<span
+												className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${
+													log.actionType === "addition"
+														? "bg-emerald-50 text-emerald-700 border border-emerald-100/50"
+														: log.actionType === "distribution"
+															? "bg-blue-50 text-blue-700 border border-blue-100/50"
+															: log.actionType === "correction"
+																? "bg-amber-50 text-amber-700 border border-amber-100/50"
+																: "bg-red-50 text-red-700 border border-red-100/50"
+												}`}>
+												{log.action}
+											</span>
+										</td>
+
+										<td className="px-6 py-4">
+											<div className="font-semibold text-slate-900">{log.targetItem}</div>
+											<div className="text-xs text-slate-400 mt-0.5">
+												{log.targetDetail}
+											</div>
+										</td>
+
+										<td className="px-6 py-4 font-bold">
+											<span
+												className={
+													log.changeType === "positive"
+														? "text-emerald-600"
+														: "text-blue-600"
+												}>
+												{log.change}
+											</span>
+										</td>
+
+										<td className="px-6 py-4">
+											<div className="flex justify-center text-slate-500">
+												{log.source === "web" ? (
+													<span title="Web Admin Panel">
+														<MonitorIcon className="w-4 h-4 text-slate-700" />
+													</span>
+												) : (
+													<span title="Automated System / Robot">
+														<BotIcon className="w-4 h-4 text-slate-600" />
+													</span>
+												)}
+											</div>
+										</td>
+									</tr>
+								))}
 						</tbody>
 					</table>
 				</div>
 
 				<div className="p-4 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-between gap-4 bg-white">
 					<span className="text-xs text-slate-400 font-medium text-center sm:text-left">
-						Menampilkan <span className="text-slate-700 font-semibold">1-10</span>{" "}
-						dari <span className="text-slate-700 font-semibold">1,240</span> entri
+						Menampilkan{" "}
+						<span className="text-slate-700 font-semibold">
+							{rangeStart}-{rangeEnd}
+						</span>{" "}
+						dari{" "}
+						<span className="text-slate-700 font-semibold">
+							{total.toLocaleString("id-ID")}
+						</span>{" "}
+						entri
 					</span>
 
 					<div className="inline-flex items-center gap-1 overflow-x-auto max-w-full py-0.5">
 						<button
-							className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 transition-colors disabled:opacity-50 shrink-0"
-							disabled>
+							onClick={() => setPage((p) => Math.max(p - 1, 1))}
+							disabled={page <= 1}
+							className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 transition-colors disabled:opacity-50 shrink-0">
 							<ChevronLeftIcon className="w-4 h-4" />
 						</button>
-						<button className="px-3 py-1 text-xs font-bold rounded-lg bg-slate-900 text-white shadow-sm shrink-0">
-							1
-						</button>
-						<button className="px-3 py-1 text-xs font-semibold rounded-lg text-slate-600 hover:bg-slate-50 border border-transparent shrink-0">
-							2
-						</button>
-						<button className="px-3 py-1 text-xs font-semibold rounded-lg text-slate-600 hover:bg-slate-50 border border-transparent shrink-0">
-							3
-						</button>
-						<span className="px-1 text-xs text-slate-400 font-medium shrink-0">
-							...
-						</span>
-						<button className="px-3 py-1 text-xs font-semibold rounded-lg text-slate-600 hover:bg-slate-50 border border-transparent shrink-0">
-							124
-						</button>
-						<button className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors shrink-0">
+
+						{getPageNumbers(page, totalPages).map((entry, idx) =>
+							entry === "..." ? (
+								<span
+									key={`ellipsis-${idx}`}
+									className="px-1 text-xs text-slate-400 font-medium shrink-0">
+									...
+								</span>
+							) : (
+								<button
+									key={entry}
+									onClick={() => setPage(entry as number)}
+									className={`px-3 py-1 text-xs font-semibold rounded-lg shrink-0 transition-colors ${
+										entry === page
+											? "bg-slate-900 text-white shadow-sm"
+											: "text-slate-600 hover:bg-slate-50 border border-transparent"
+									}`}>
+									{entry}
+								</button>
+							),
+						)}
+
+						<button
+							onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+							disabled={page >= totalPages}
+							className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 shrink-0">
 							<ChevronRightIcon className="w-4 h-4" />
 						</button>
 					</div>
