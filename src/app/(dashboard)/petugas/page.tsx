@@ -1,90 +1,112 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
 import {
 	TruckIcon,
 	UserCheckIcon,
 	ShieldAlertIcon,
 	ChevronRightIcon,
+	ChevronLeftIcon,
 } from "lucide-react";
-import type { StatCard, SopirLog, KendaraanLog } from "@/app/types/Petugas";
+import type {
+	StatCard,
+	SopirLog,
+	KendaraanLog,
+	PetugasSummary,
+	Pagination,
+} from "@/app/types/Petugas";
+import AddDriverModal from "@/components/modal/AddDriverModal";
+import AddVehicleModal from "@/components/modal/AddVehicleModal";
 
-const statsData: StatCard[] = [
-	{ label: "TOTAL SOPIR", value: "12", desc: "Sopir Terdaftar" },
-	{ label: "SOPIR AKTIF", value: "10", desc: "Sedang Bertugas" },
-	{ label: "TOTAL KENDARAAN", value: "8", desc: "Unit Armada" },
-	{
-		label: "DALAM PERAWATAN",
-		value: "1",
-		desc: "Merespon Tindakan",
-		isWarning: true,
-	},
-];
-
-const sopirLogs: SopirLog[] = [
-	{
-		nama: "Asep Saputra",
-		sim: "SIM B1 • 12390123",
-		kontak: "0812-990-xxx",
-		unit: "B 1234 ABC",
-		type: "assigned",
-	},
-	{
-		nama: "Budi Santoso",
-		sim: "SIM A • 99201382",
-		kontak: "0878-112-xxx",
-		unit: "Tersedia",
-		type: "available",
-	},
-	{
-		nama: "Dani Setiawan",
-		sim: "SIM B2 • 88273615",
-		kontak: "0821-443-xxx",
-		unit: "D 4567 DEF",
-		type: "assigned",
-	},
-	{
-		nama: "Eko Prasetyo",
-		sim: "SIM B1 • 33219845",
-		kontak: "0813-221-xxx",
-		unit: "B 8890 GHJ",
-		type: "assigned",
-	},
-];
-
-const kendaraanLogs: KendaraanLog[] = [
-	{
-		plat: "B 1234 ABC",
-		model: "Toyota Hino 300",
-		jenis: "Cold-Chain",
-		sopir: "Asep Saputra",
-		status: "Digunakan",
-		type: "active",
-	},
-	{
-		plat: "D 4567 DEF",
-		model: "Isuzu Giga FVR",
-		jenis: "Kargo Kering",
-		sopir: "Dani Setiawan",
-		status: "Tersedia",
-		type: "available",
-	},
-	{
-		plat: "B 8890 GHJ",
-		model: "Mitsubishi L300",
-		jenis: "Kargo Kering",
-		sopir: "Eko Prasetyo",
-		status: "Digunakan",
-		type: "active",
-	},
-	{
-		plat: "F 1122 KLM",
-		model: "Toyota Dyna",
-		jenis: "Cold-Chain",
-		sopir: "-",
-		status: "Perawatan",
-		type: "maintenance",
-	},
-];
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 export default function Petugas() {
+	const [summary, setSummary] = useState<PetugasSummary | null>(null);
+	const [sopirLogs, setSopirLogs] = useState<SopirLog[]>([]);
+	const [kendaraanLogs, setKendaraanLogs] = useState<KendaraanLog[]>([]);
+	const [sopirPagination, setSopirPagination] = useState<Pagination | null>(
+		null,
+	);
+	const [kendaraanPagination, setKendaraanPagination] =
+		useState<Pagination | null>(null);
+	const [sopirPage, setSopirPage] = useState(1);
+	const [sopirPageSize, setSopirPageSize] = useState(10);
+	const [kendaraanPage, setKendaraanPage] = useState(1);
+	const [kendaraanPageSize, setKendaraanPageSize] = useState(10);
+	const [isLoading, setIsLoading] = useState(true);
+	const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
+	const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
+
+	const fetchSummary = useCallback(async () => {
+		const summaryData = await fetch("/api/petugas/summary").then((r) => r.json());
+		setSummary(summaryData);
+	}, []);
+
+	const fetchDrivers = useCallback(async (page: number, pageSize: number) => {
+		const driversData = await fetch(
+			`/api/drivers?page=${page}&pageSize=${pageSize}`,
+		).then((r) => r.json());
+		setSopirLogs(driversData.drivers ?? []);
+		setSopirPagination(driversData.pagination ?? null);
+	}, []);
+
+	const fetchVehicles = useCallback(async (page: number, pageSize: number) => {
+		const vehiclesData = await fetch(
+			`/api/vehicles?page=${page}&pageSize=${pageSize}`,
+		).then((r) => r.json());
+		setKendaraanLogs(vehiclesData.vehicles ?? []);
+		setKendaraanPagination(vehiclesData.pagination ?? null);
+	}, []);
+
+	const fetchAll = useCallback(async () => {
+		setIsLoading(true);
+		await Promise.all([
+			fetchSummary(),
+			fetchDrivers(sopirPage, sopirPageSize),
+			fetchVehicles(kendaraanPage, kendaraanPageSize),
+		]);
+		setIsLoading(false);
+	}, [
+		fetchSummary,
+		fetchDrivers,
+		fetchVehicles,
+		sopirPage,
+		sopirPageSize,
+		kendaraanPage,
+		kendaraanPageSize,
+	]);
+
+	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
+		fetchAll();
+	}, [fetchAll]);
+
+	const statsData: StatCard[] = summary
+		? [
+				{
+					label: "TOTAL SOPIR",
+					value: String(summary.totalSopir),
+					desc: "Sopir Terdaftar",
+				},
+				{
+					label: "SOPIR AKTIF",
+					value: String(summary.sopirAktif),
+					desc: "Sedang Bertugas",
+				},
+				{
+					label: "TOTAL KENDARAAN",
+					value: String(summary.totalKendaraan),
+					desc: "Unit Armada",
+				},
+				{
+					label: "DALAM PERAWATAN",
+					value: String(summary.dalamPerawatan),
+					desc: "Merespon Tindakan",
+					isWarning: summary.dalamPerawatan > 0,
+				},
+			]
+		: [];
+
 	return (
 		<div className="flex flex-col w-full p-4 sm:p-6 space-y-6">
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -98,10 +120,14 @@ export default function Petugas() {
 				</div>
 
 				<div className="flex items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
-					<button className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors shadow-sm">
+					<button
+						onClick={() => setIsAddVehicleOpen(true)}
+						className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors shadow-sm">
 						Tambah Kendaraan
 					</button>
-					<button className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors whitespace-nowrap">
+					<button
+						onClick={() => setIsAddDriverOpen(true)}
+						className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors whitespace-nowrap">
 						Tambah Sopir
 					</button>
 				</div>
@@ -157,37 +183,91 @@ export default function Petugas() {
 									</tr>
 								</thead>
 								<tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-									{sopirLogs.map((sopir, idx) => (
-										<tr key={idx} className="hover:bg-slate-50/40 transition-colors">
-											<td className="px-6 py-4">
-												<div className="font-semibold text-slate-900">{sopir.nama}</div>
-												<div className="text-xs text-slate-400 mt-0.5">{sopir.sim}</div>
-											</td>
-											<td className="px-6 py-4 text-slate-500 font-medium">
-												{sopir.kontak}
-											</td>
-											<td className="px-6 py-4">
-												<span
-													className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${
-														sopir.type === "available"
-															? "bg-emerald-50 text-emerald-700 border border-emerald-100/50"
-															: "bg-blue-50 text-blue-700 border border-blue-100/50"
-													}`}>
-													{sopir.unit}
-												</span>
+									{isLoading && (
+										<tr>
+											<td colSpan={3} className="px-6 py-6 text-center text-slate-400">
+												Memuat...
 											</td>
 										</tr>
-									))}
+									)}
+									{!isLoading && sopirLogs.length === 0 && (
+										<tr>
+											<td colSpan={3} className="px-6 py-6 text-center text-slate-400">
+												Belum ada sopir terdaftar.
+											</td>
+										</tr>
+									)}
+									{!isLoading &&
+										sopirLogs.map((sopir) => (
+											<tr
+												key={sopir.id}
+												className="hover:bg-slate-50/40 transition-colors">
+												<td className="px-6 py-4">
+													<div className="font-semibold text-slate-900">{sopir.nama}</div>
+													<div className="text-xs text-slate-400 mt-0.5">{sopir.sim}</div>
+												</td>
+												<td className="px-6 py-4 text-slate-500 font-medium">
+													{sopir.kontak}
+												</td>
+												<td className="px-6 py-4">
+													<span
+														className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${
+															sopir.type === "available"
+																? "bg-emerald-50 text-emerald-700 border border-emerald-100/50"
+																: "bg-blue-50 text-blue-700 border border-blue-100/50"
+														}`}>
+														{sopir.unit}
+													</span>
+												</td>
+											</tr>
+										))}
 								</tbody>
 							</table>
 						</div>
 					</div>
-					<div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-						<span className="text-xs text-slate-400 font-medium">
-							Menampilkan{" "}
-							<span className="text-slate-700 font-semibold">{sopirLogs.length}</span>{" "}
-							dari <span className="text-slate-700 font-semibold">12</span> petugas
-						</span>
+					<div className="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+						<div className="flex items-center gap-2">
+							<span className="text-xs text-slate-400 font-medium">Tampilkan</span>
+							<select
+								value={sopirPageSize}
+								onChange={(e) => {
+									setSopirPageSize(Number(e.target.value));
+									setSopirPage(1);
+								}}
+								className="text-xs font-semibold border border-slate-200 rounded-md px-2 py-1 text-slate-700 bg-white">
+								{PAGE_SIZE_OPTIONS.map((size) => (
+									<option key={size} value={size}>
+										{size}
+									</option>
+								))}
+							</select>
+							<span className="text-xs text-slate-400 font-medium">
+								dari {sopirPagination?.totalItems ?? 0} sopir
+							</span>
+						</div>
+						<div className="flex items-center gap-2">
+							<button
+								onClick={() => setSopirPage((p) => Math.max(1, p - 1))}
+								disabled={!sopirPagination || sopirPagination.page <= 1}
+								className="p-1.5 rounded-md border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+								<ChevronLeftIcon className="w-3.5 h-3.5" />
+							</button>
+							<span className="text-xs font-semibold text-slate-600">
+								{sopirPagination?.page ?? 1} / {sopirPagination?.totalPages ?? 1}
+							</span>
+							<button
+								onClick={() =>
+									setSopirPage((p) =>
+										sopirPagination ? Math.min(sopirPagination.totalPages, p + 1) : p,
+									)
+								}
+								disabled={
+									!sopirPagination || sopirPagination.page >= sopirPagination.totalPages
+								}
+								className="p-1.5 rounded-md border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+								<ChevronRightIcon className="w-3.5 h-3.5" />
+							</button>
+						</div>
 					</div>
 				</div>
 
@@ -210,46 +290,119 @@ export default function Petugas() {
 									</tr>
 								</thead>
 								<tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-									{kendaraanLogs.map((unit, idx) => (
-										<tr key={idx} className="hover:bg-slate-50/40 transition-colors">
-											<td className="px-6 py-4">
-												<div className="font-semibold text-slate-900">{unit.plat}</div>
-												<div className="text-xs text-slate-400 mt-0.5">
-													{unit.model} &bull; {unit.jenis}
-												</div>
-											</td>
-											<td className="px-6 py-4 text-slate-500 font-medium">
-												{unit.sopir}
-											</td>
-											<td className="px-6 py-4">
-												<span
-													className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${
-														unit.type === "available"
-															? "bg-emerald-50 text-emerald-700 border border-emerald-100/50"
-															: unit.type === "maintenance"
-																? "bg-amber-50 text-amber-700 border border-amber-100/50"
-																: "bg-blue-50 text-blue-700 border border-blue-100/50"
-													}`}>
-													{unit.status}
-												</span>
+									{isLoading && (
+										<tr>
+											<td colSpan={3} className="px-6 py-6 text-center text-slate-400">
+												Memuat...
 											</td>
 										</tr>
-									))}
+									)}
+									{!isLoading && kendaraanLogs.length === 0 && (
+										<tr>
+											<td colSpan={3} className="px-6 py-6 text-center text-slate-400">
+												Belum ada kendaraan terdaftar.
+											</td>
+										</tr>
+									)}
+									{!isLoading &&
+										kendaraanLogs.map((unit) => (
+											<tr key={unit.id} className="hover:bg-slate-50/40 transition-colors">
+												<td className="px-6 py-4">
+													<div className="font-semibold text-slate-900">{unit.plat}</div>
+													<div className="text-xs text-slate-400 mt-0.5">
+														{unit.model} &bull; {unit.jenis}
+													</div>
+												</td>
+												<td className="px-6 py-4 text-slate-500 font-medium">
+													{unit.sopir}
+												</td>
+												<td className="px-6 py-4">
+													<span
+														className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${
+															unit.type === "available"
+																? "bg-emerald-50 text-emerald-700 border border-emerald-100/50"
+																: unit.type === "maintenance"
+																	? "bg-amber-50 text-amber-700 border border-amber-100/50"
+																	: "bg-blue-50 text-blue-700 border border-blue-100/50"
+														}`}>
+														{unit.status}
+													</span>
+												</td>
+											</tr>
+										))}
 								</tbody>
 							</table>
 						</div>
 					</div>
-					<div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-						<span className="text-xs text-slate-400 font-medium">
-							Menampilkan{" "}
-							<span className="text-slate-700 font-semibold">
-								{kendaraanLogs.length}
-							</span>{" "}
-							dari <span className="text-slate-700 font-semibold">8</span> armada aktif
-						</span>
+					<div className="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+						<div className="flex items-center gap-2">
+							<span className="text-xs text-slate-400 font-medium">Tampilkan</span>
+							<select
+								value={kendaraanPageSize}
+								onChange={(e) => {
+									setKendaraanPageSize(Number(e.target.value));
+									setKendaraanPage(1);
+								}}
+								className="text-xs font-semibold border border-slate-200 rounded-md px-2 py-1 text-slate-700 bg-white">
+								{PAGE_SIZE_OPTIONS.map((size) => (
+									<option key={size} value={size}>
+										{size}
+									</option>
+								))}
+							</select>
+							<span className="text-xs text-slate-400 font-medium">
+								dari {kendaraanPagination?.totalItems ?? 0} armada
+							</span>
+						</div>
+						<div className="flex items-center gap-2">
+							<button
+								onClick={() => setKendaraanPage((p) => Math.max(1, p - 1))}
+								disabled={!kendaraanPagination || kendaraanPagination.page <= 1}
+								className="p-1.5 rounded-md border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+								<ChevronLeftIcon className="w-3.5 h-3.5" />
+							</button>
+							<span className="text-xs font-semibold text-slate-600">
+								{kendaraanPagination?.page ?? 1} /{" "}
+								{kendaraanPagination?.totalPages ?? 1}
+							</span>
+							<button
+								onClick={() =>
+									setKendaraanPage((p) =>
+										kendaraanPagination
+											? Math.min(kendaraanPagination.totalPages, p + 1)
+											: p,
+									)
+								}
+								disabled={
+									!kendaraanPagination ||
+									kendaraanPagination.page >= kendaraanPagination.totalPages
+								}
+								className="p-1.5 rounded-md border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+								<ChevronRightIcon className="w-3.5 h-3.5" />
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
+
+			<AddDriverModal
+				isOpen={isAddDriverOpen}
+				onClose={() => setIsAddDriverOpen(false)}
+				onSuccess={() => {
+					setSopirPage(1);
+					fetchDrivers(1, sopirPageSize);
+					fetchSummary();
+				}}
+			/>
+			<AddVehicleModal
+				isOpen={isAddVehicleOpen}
+				onClose={() => setIsAddVehicleOpen(false)}
+				onSuccess={() => {
+					setKendaraanPage(1);
+					fetchVehicles(1, kendaraanPageSize);
+					fetchSummary();
+				}}
+			/>
 		</div>
 	);
 }

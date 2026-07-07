@@ -5,19 +5,39 @@ export interface StatCard {
 	isWarning?: boolean;
 }
 
+export type SopirAssignmentType = "assigned" | "available";
+
 export interface SopirLog {
+	id: string;
 	nama: string;
 	sim: string;
 	kontak: string;
 	unit: string;
-	type: "assigned" | "available";
+	type: SopirAssignmentType;
 }
 
+export type KendaraanStatusType = "active" | "available" | "maintenance";
+
 export interface KendaraanLog {
+	id: string;
 	plat: string;
 	model: string;
 	jenis: string;
 	sopir: string;
 	status: string;
-	type: "active" | "available" | "maintenance";
+	type: KendaraanStatusType;
+}
+
+export interface PetugasSummary {
+	totalSopir: number;
+	sopirAktif: number;
+	totalKendaraan: number;
+	dalamPerawatan: number;
+}
+
+export interface Pagination {
+	page: number;
+	pageSize: number;
+	totalItems: number;
+	totalPages: number;
 }

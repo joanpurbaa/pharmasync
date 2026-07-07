@@ -42,6 +42,18 @@ enum StorageCondition {
   BEKU
 }
 
+enum DriverStatus {
+  AKTIF
+  CUTI
+  NONAKTIF
+}
+
+enum VehicleStatus {
+  TERSEDIA
+  DIGUNAKAN
+  PERAWATAN
+}
+
 model User {
   id             String          @id @default(uuid())
   name           String
@@ -101,6 +113,37 @@ model Destination {
   @@map("destinations")
 }
 
+model Driver {
+  id              String       @id @default(uuid())
+  name            String
+  simNumber       String
+  simType         String
+  phone           String
+  status          DriverStatus @default(AKTIF)
+  usualVehicleId  String?
+  usualVehicle    Vehicle?     @relation("DriverUsualVehicle", fields: [usualVehicleId], references: [id])
+  usualForVehicles Vehicle[]   @relation("VehicleUsualDriver")
+  shipments       Shipment[]   @relation("ShipmentDriver")
+  createdAt       DateTime     @default(now())
+
+  @@map("drivers")
+}
+
+model Vehicle {
+  id              String        @id @default(uuid())
+  plateNumber     String        @unique
+  model           String
+  vehicleType     String
+  status          VehicleStatus @default(TERSEDIA)
+  usualDriverId   String?
+  usualDriver     Driver?       @relation("VehicleUsualDriver", fields: [usualDriverId], references: [id])
+  usualForDrivers Driver[]      @relation("DriverUsualVehicle")
+  shipments       Shipment[]    @relation("ShipmentVehicle")
+  createdAt       DateTime      @default(now())
+
+  @@map("vehicles")
+}
+
 model Item {
   id                    String            @id @default(uuid())
   sku                   String            @unique
@@ -158,9 +201,10 @@ model Shipment {
   destinationId  String
   destination    Destination     @relation(fields: [destinationId], references: [id])
   scheduledAt    DateTime
-  driverName     String?
-  vehiclePlate   String?
-  vehicleLabel   String?
+  driverId       String?
+  driver         Driver?         @relation("ShipmentDriver", fields: [driverId], references: [id])
+  vehicleId      String?
+  vehicle        Vehicle?        @relation("ShipmentVehicle", fields: [vehicleId], references: [id])
   status         ShipmentStatus  @default(DIJADWALKAN)
   sourceChannel  SourceChannel   @default(WEB)
   createdById    String
@@ -171,6 +215,8 @@ model Shipment {
 
   @@index([status])
   @@index([destinationId])
+  @@index([driverId])
+  @@index([vehicleId])
   @@map("shipments")
 }
 

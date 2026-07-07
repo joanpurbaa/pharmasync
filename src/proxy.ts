@@ -9,17 +9,40 @@ const protectedPaths = [
 	"/riwayat",
 	"/petugas",
 ];
-// const protectedPaths = ["/test"];
 const publicPaths = ["/masuk"];
 
 export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
+
+	if (pathname === "/") {
+		const token = request.cookies.get("auth_token")?.value;
+
+		if (!token) {
+			return NextResponse.redirect(new URL("/masuk", request.url));
+		}
+
+		try {
+			await verifyToken(token);
+			return NextResponse.redirect(new URL("/dashboard", request.url));
+		} catch {
+			return NextResponse.redirect(new URL("/masuk", request.url));
+		}
+	}
 
 	if (
 		publicPaths.some(
 			(path) => pathname === path || pathname.startsWith(`${path}/`),
 		)
 	) {
+		const token = request.cookies.get("auth_token")?.value;
+		if (token) {
+			try {
+				await verifyToken(token);
+				return NextResponse.redirect(new URL("/dashboard", request.url));
+			} catch {
+				return NextResponse.next();
+			}
+		}
 		return NextResponse.next();
 	}
 
