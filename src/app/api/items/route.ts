@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 
+async function invalidateAuditLogsCache() {
+	const cacheKeys = await redis.keys("pharmasync:audit-logs:*");
+	if (cacheKeys.length > 0) {
+		await redis.del(...cacheKeys);
+	}
+}
+
 const statusPriority: Record<string, number> = {
 	MENIPIS: 0,
 	KRITIS: 1,
@@ -190,6 +197,7 @@ export async function POST(request: Request) {
 	});
 
 	await redis.del("pharmasync:dashboard:overview");
+	await invalidateAuditLogsCache();
 
 	return NextResponse.json({ item }, { status: 201 });
 }
