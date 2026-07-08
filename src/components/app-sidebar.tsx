@@ -22,6 +22,7 @@ import {
   Truck,
   History,
   Users,
+  Box,
 } from "lucide-react";
 
 const teams = [
@@ -67,6 +68,11 @@ const projects = [
 		name: "Riwayat",
 		url: "/riwayat",
 		icon: <History />,
+	},
+	{
+		name: "Visualisasi 3D",
+		url: "/warehouse",
+		icon: <Box />,
 	},
 ];
 
