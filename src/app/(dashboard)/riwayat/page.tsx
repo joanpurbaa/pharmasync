@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
 	SearchIcon,
 	SlidersHorizontalIcon,
@@ -9,16 +9,27 @@ import {
 	RefreshCwIcon,
 	MonitorIcon,
 	BotIcon,
-	ChevronLeftIcon,
-	ChevronRightIcon,
 	ShieldCheckIcon,
 	ZapIcon,
 } from "lucide-react";
-import type {
-	AuditLog,
-	AuditLogStats,
-	SystemMetric,
-} from "@/app/types/Riwayat";
+import type { SystemMetric } from "@/app/types/Riwayat";
+import { useRiwayatStore } from "@/store/useRiwayatStore";
+import {
+	Pagination,
+	PaginationContent,
+	PaginationEllipsis,
+	PaginationItem,
+	PaginationLink,
+	PaginationNext,
+	PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 
 const systemMetrics: SystemMetric[] = [
 	{
@@ -38,53 +49,47 @@ const systemMetrics: SystemMetric[] = [
 
 const PAGE_SIZE = 10;
 
-function getPageNumbers(current: number, total: number) {
-	if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-	if (current <= 4) return [1, 2, 3, 4, 5, "...", total];
-	if (current >= total - 3)
-		return [1, "...", total - 4, total - 3, total - 2, total - 1, total];
-	return [1, "...", current - 1, current, current + 1, "...", total];
+function getPageNumbers(
+	current: number,
+	total: number,
+): (number | "ellipsis")[] {
+	const pages: (number | "ellipsis")[] = [];
+	const delta = 1;
+	for (let i = 1; i <= total; i++) {
+		if (
+			i === 1 ||
+			i === total ||
+			(i >= current - delta && i <= current + delta)
+		) {
+			pages.push(i);
+		} else if (pages[pages.length - 1] !== "ellipsis") {
+			pages.push("ellipsis");
+		}
+	}
+	return pages;
 }
 
 export default function Riwayat() {
-	const [searchQuery, setSearchQuery] = useState("");
-	const [page, setPage] = useState(1);
-	const [logs, setLogs] = useState<AuditLog[]>([]);
-	const [total, setTotal] = useState(0);
-	const [stats, setStats] = useState<AuditLogStats>({
-		todayCount: 0,
-		manualCorrections: 0,
-	});
-	const [isLoading, setIsLoading] = useState(true);
-
-	const fetchAuditLogs = useCallback(async () => {
-		setIsLoading(true);
-		const params = new URLSearchParams();
-		if (searchQuery) params.set("search", searchQuery);
-		params.set("page", String(page));
-		params.set("pageSize", String(PAGE_SIZE));
-
-		const response = await fetch(`/api/audit-logs?${params.toString()}`);
-		const data = await response.json();
-		setLogs(data.logs ?? []);
-		setTotal(data.total ?? 0);
-		setStats(data.stats ?? { todayCount: 0, manualCorrections: 0 });
-		setIsLoading(false);
-	}, [searchQuery, page]);
+	const searchQuery = useRiwayatStore((state) => state.searchQuery);
+	const setSearchQuery = useRiwayatStore((state) => state.setSearchQuery);
+	const page = useRiwayatStore((state) => state.page);
+	const setPage = useRiwayatStore((state) => state.setPage);
+	const logs = useRiwayatStore((state) => state.logs);
+	const total = useRiwayatStore((state) => state.total);
+	const stats = useRiwayatStore((state) => state.stats);
+	const isLoading = useRiwayatStore((state) => state.isLoading);
+	const pageSize = useRiwayatStore((state) => state.pageSize);
+	const setPageSize = useRiwayatStore((state) => state.setPageSize);
+	const fetchAuditLogs = useRiwayatStore((state) => state.fetchAuditLogs);
 
 	useEffect(() => {
 		const timeout = setTimeout(fetchAuditLogs, 300);
 		return () => clearTimeout(timeout);
-	}, [fetchAuditLogs]);
+	}, [searchQuery, page, pageSize, fetchAuditLogs]);
 
-	useEffect(() => {
-		// eslint-disable-next-line react-hooks/set-state-in-effect
-		setPage(1);
-	}, [searchQuery]);
-
-	const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
-	const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-	const rangeEnd = Math.min(page * PAGE_SIZE, total);
+	const totalPages = Math.max(Math.ceil(total / pageSize), 1);
+	const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
+	const rangeEnd = Math.min(page * pageSize, total);
 
 	return (
 		<div className="flex flex-col w-full p-4 sm:p-6 space-y-6">
@@ -247,55 +252,85 @@ export default function Riwayat() {
 					</table>
 				</div>
 
-				<div className="p-4 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-between gap-4 bg-white">
-					<span className="text-xs text-slate-400 font-medium text-center sm:text-left">
-						Menampilkan{" "}
-						<span className="text-slate-700 font-semibold">
-							{rangeStart}-{rangeEnd}
-						</span>{" "}
-						dari{" "}
-						<span className="text-slate-700 font-semibold">
-							{total.toLocaleString("id-ID")}
-						</span>{" "}
-						entri
-					</span>
+				<div className="p-4 bg-white border-t border-slate-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+					<div className="flex items-center gap-4 order-2 lg:order-1">
+						<span className="text-xs text-slate-500 font-medium text-center sm:text-left">
+							Menampilkan{" "}
+							<span className="font-bold text-slate-700">
+								{rangeStart}-{rangeEnd}
+							</span>{" "}
+							dari{" "}
+							<span className="font-bold text-slate-700">
+								{total.toLocaleString("id-ID")}
+							</span>{" "}
+							entri
+						</span>
 
-					<div className="inline-flex items-center gap-1 overflow-x-auto max-w-full py-0.5">
-						<button
-							onClick={() => setPage((p) => Math.max(p - 1, 1))}
-							disabled={page <= 1}
-							className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 transition-colors disabled:opacity-50 shrink-0">
-							<ChevronLeftIcon className="w-4 h-4" />
-						</button>
-
-						{getPageNumbers(page, totalPages).map((entry, idx) =>
-							entry === "..." ? (
-								<span
-									key={`ellipsis-${idx}`}
-									className="px-1 text-xs text-slate-400 font-medium shrink-0">
-									...
-								</span>
-							) : (
-								<button
-									key={entry}
-									onClick={() => setPage(entry as number)}
-									className={`px-3 py-1 text-xs font-semibold rounded-lg shrink-0 transition-colors ${
-										entry === page
-											? "bg-slate-900 text-white shadow-sm"
-											: "text-slate-600 hover:bg-slate-50 border border-transparent"
-									}`}>
-									{entry}
-								</button>
-							),
-						)}
-
-						<button
-							onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-							disabled={page >= totalPages}
-							className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 shrink-0">
-							<ChevronRightIcon className="w-4 h-4" />
-						</button>
+						<div className="flex items-center gap-2">
+							<span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+								Baris per halaman
+							</span>
+							<Select
+								value={String(pageSize)}
+								onValueChange={(value) => setPageSize(Number(value))}>
+								<SelectTrigger className="h-8 w-[72px] text-xs">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="10">10</SelectItem>
+									<SelectItem value="25">25</SelectItem>
+									<SelectItem value="50">50</SelectItem>
+									<SelectItem value="100">100</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
 					</div>
+
+					<Pagination className="order-1 lg:order-2 mx-0 w-auto">
+						<PaginationContent>
+							<PaginationItem>
+								<PaginationPrevious
+									href="#"
+									onClick={(e) => {
+										e.preventDefault();
+										if (page > 1) setPage(page - 1);
+									}}
+									className={page <= 1 ? "pointer-events-none opacity-50" : ""}
+								/>
+							</PaginationItem>
+
+							{getPageNumbers(page, totalPages).map((pageNumber, idx) =>
+								pageNumber === "ellipsis" ? (
+									<PaginationItem key={`ellipsis-${idx}`}>
+										<PaginationEllipsis />
+									</PaginationItem>
+								) : (
+									<PaginationItem key={pageNumber}>
+										<PaginationLink
+											href="#"
+											isActive={pageNumber === page}
+											onClick={(e) => {
+												e.preventDefault();
+												setPage(pageNumber);
+											}}>
+											{pageNumber}
+										</PaginationLink>
+									</PaginationItem>
+								),
+							)}
+
+							<PaginationItem>
+								<PaginationNext
+									href="#"
+									onClick={(e) => {
+										e.preventDefault();
+										if (page < totalPages) setPage(page + 1);
+									}}
+									className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
+								/>
+							</PaginationItem>
+						</PaginationContent>
+					</Pagination>
 				</div>
 			</div>
 

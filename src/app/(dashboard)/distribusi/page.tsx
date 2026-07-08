@@ -1,6 +1,5 @@
 "use client";
 
-import React, { useState } from "react";
 import {
 	SearchIcon,
 	PlusIcon,
@@ -16,6 +15,7 @@ import {
 	NavigationIcon,
 } from "lucide-react";
 import { ActivityLog, DeliveryCard, ShippingItem } from "@/app/types/Distribusi";
+import { useDistribusiStore } from "@/store/useDistribusiStore";
 
 
 const deliveryCards: DeliveryCard[] = [
@@ -126,7 +126,8 @@ const activityLogs: ActivityLog[] = [
 ];
 
 export default function Distribusi() {
-	const [searchQuery, setSearchQuery] = useState("");
+  const searchQuery = useDistribusiStore((state) => state.searchQuery);
+  const setSearchQuery = useDistribusiStore((state) => state.setSearchQuery);
 
 	return (
 		<div className="flex flex-col w-full p-4 sm:p-6 space-y-6 bg-slate-50/50">

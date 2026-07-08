@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
 	SearchIcon,
 	PlusIcon,
@@ -17,10 +17,7 @@ import {
 import AddItemModal from "@/components/modal/AddItemModal";
 import ReceiveStockModal from "@/components/modal/ReceiveStockModal";
 import ItemDetailModal from "@/components/modal/ItemDetailModal";
-import type {
-	ApiItem,
-	Pagination as PaginationData,
-} from "@/app/types/StokBarang";
+import type { ApiItem } from "@/app/types/StokBarang";
 import {
 	Pagination,
 	PaginationContent,
@@ -37,6 +34,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useStokBarangStore } from "@/store/useStokBarangStore";
 
 const statusLabel: Record<ApiItem["status"], string> = {
 	AMAN: "Aman",
@@ -104,44 +102,30 @@ function getPageNumbers(
 }
 
 export default function StokBarang() {
-	const [items, setItems] = useState<ApiItem[]>([]);
-	const [pagination, setPagination] = useState<PaginationData | null>(null);
-	const [page, setPage] = useState(1);
-	const [pageSize, setPageSize] = useState(10);
-	const [isLoading, setIsLoading] = useState(true);
-	const [searchQuery, setSearchQuery] = useState("");
-	const [categoryFilter, setCategoryFilter] = useState("Semua Kategori");
-	const [statusFilter, setStatusFilter] = useState("Semua Status");
+	const items = useStokBarangStore((state) => state.items);
+	const pagination = useStokBarangStore((state) => state.pagination);
+	const page = useStokBarangStore((state) => state.page);
+	const setPage = useStokBarangStore((state) => state.setPage);
+	const pageSize = useStokBarangStore((state) => state.pageSize);
+	const setPageSize = useStokBarangStore((state) => state.setPageSize);
+	const isLoading = useStokBarangStore((state) => state.isLoading);
+	const searchQuery = useStokBarangStore((state) => state.searchQuery);
+	const setSearchQuery = useStokBarangStore((state) => state.setSearchQuery);
+	const categoryFilter = useStokBarangStore((state) => state.categoryFilter);
+	const setCategoryFilter = useStokBarangStore(
+		(state) => state.setCategoryFilter,
+	);
+	const statusFilter = useStokBarangStore((state) => state.statusFilter);
+	const setStatusFilter = useStokBarangStore((state) => state.setStatusFilter);
+	const fetchItems = useStokBarangStore((state) => state.fetchItems);
 	const [isAddItemOpen, setIsAddItemOpen] = useState(false);
 	const [isReceiveStockOpen, setIsReceiveStockOpen] = useState(false);
 	const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
-	const fetchItems = useCallback(async () => {
-		setIsLoading(true);
-		const params = new URLSearchParams();
-		if (searchQuery) params.set("search", searchQuery);
-		if (categoryFilter !== "Semua Kategori")
-			params.set("category", categoryFilter);
-		if (statusFilter !== "Semua Status") params.set("status", statusFilter);
-		params.set("page", String(page));
-		params.set("pageSize", String(pageSize));
-
-		const response = await fetch(`/api/items?${params.toString()}`);
-		const data = await response.json();
-		setItems(data.items ?? []);
-		setPagination(data.pagination ?? null);
-		setIsLoading(false);
-	}, [searchQuery, categoryFilter, statusFilter, page, pageSize]);
-
-	useEffect(() => {
-		// eslint-disable-next-line react-hooks/set-state-in-effect
-		setPage(1);
-	}, [searchQuery, categoryFilter, statusFilter, pageSize]);
-
 	useEffect(() => {
 		const timeout = setTimeout(fetchItems, 300);
 		return () => clearTimeout(timeout);
-	}, [fetchItems]);
+	}, [searchQuery, categoryFilter, statusFilter, page, pageSize, fetchItems]);
 
 	const rangeStart =
 		pagination && pagination.totalItems > 0

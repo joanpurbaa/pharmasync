@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
 	PackageIcon,
 	AlertTriangleIcon,
@@ -11,18 +11,12 @@ import {
 	CircleIcon,
 	CheckCircle2Icon,
 } from "lucide-react";
-import { DashboardData } from "@/app/types/Dashboard";
+import { useDashboardStore } from "@/store/useDashboardStore";
 
 export default function Dashboard() {
-	const [data, setData] = useState<DashboardData | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
-
-	const fetchDashboard = useCallback(async () => {
-		const response = await fetch("/api/dashboard");
-		const json = await response.json();
-		setData(json);
-		setIsLoading(false);
-	}, []);
+	const data = useDashboardStore((state) => state.data);
+	const isLoading = useDashboardStore((state) => state.isLoading);
+	const fetchDashboard = useDashboardStore((state) => state.fetchDashboard);
 
 	useEffect(() => {
 		// eslint-disable-next-line react-hooks/set-state-in-effect

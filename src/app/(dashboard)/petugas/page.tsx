@@ -1,85 +1,79 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import {
-	TruckIcon,
-	UserCheckIcon,
-	ShieldAlertIcon,
-	ChevronRightIcon,
-	ChevronLeftIcon,
-} from "lucide-react";
-import type {
-	StatCard,
-	SopirLog,
-	KendaraanLog,
-	PetugasSummary,
-	Pagination,
-} from "@/app/types/Petugas";
+import { useEffect, useState } from "react";
+import { TruckIcon, UserCheckIcon, ShieldAlertIcon } from "lucide-react";
+import type { StatCard } from "@/app/types/Petugas";
+import { usePetugasStore } from "@/store/usePetugasStore";
 import AddDriverModal from "@/components/modal/AddDriverModal";
 import AddVehicleModal from "@/components/modal/AddVehicleModal";
+import {
+	Pagination,
+	PaginationContent,
+	PaginationEllipsis,
+	PaginationItem,
+	PaginationLink,
+	PaginationNext,
+	PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
+function getPageNumbers(
+	current: number,
+	total: number,
+): (number | "ellipsis")[] {
+	const pages: (number | "ellipsis")[] = [];
+	const delta = 1;
+	for (let i = 1; i <= total; i++) {
+		if (
+			i === 1 ||
+			i === total ||
+			(i >= current - delta && i <= current + delta)
+		) {
+			pages.push(i);
+		} else if (pages[pages.length - 1] !== "ellipsis") {
+			pages.push("ellipsis");
+		}
+	}
+	return pages;
+}
+
 export default function Petugas() {
-	const [summary, setSummary] = useState<PetugasSummary | null>(null);
-	const [sopirLogs, setSopirLogs] = useState<SopirLog[]>([]);
-	const [kendaraanLogs, setKendaraanLogs] = useState<KendaraanLog[]>([]);
-	const [sopirPagination, setSopirPagination] = useState<Pagination | null>(
-		null,
+	const summary = usePetugasStore((state) => state.summary);
+	const sopirLogs = usePetugasStore((state) => state.sopirLogs);
+	const kendaraanLogs = usePetugasStore((state) => state.kendaraanLogs);
+	const sopirPagination = usePetugasStore((state) => state.sopirPagination);
+	const kendaraanPagination = usePetugasStore(
+		(state) => state.kendaraanPagination,
 	);
-	const [kendaraanPagination, setKendaraanPagination] =
-		useState<Pagination | null>(null);
-	const [sopirPage, setSopirPage] = useState(1);
-	const [sopirPageSize, setSopirPageSize] = useState(10);
-	const [kendaraanPage, setKendaraanPage] = useState(1);
-	const [kendaraanPageSize, setKendaraanPageSize] = useState(10);
-	const [isLoading, setIsLoading] = useState(true);
+	const sopirPage = usePetugasStore((state) => state.sopirPage);
+	const sopirPageSize = usePetugasStore((state) => state.sopirPageSize);
+	const kendaraanPage = usePetugasStore((state) => state.kendaraanPage);
+	const kendaraanPageSize = usePetugasStore((state) => state.kendaraanPageSize);
+	const isLoading = usePetugasStore((state) => state.isLoading);
+	const setSopirPage = usePetugasStore((state) => state.setSopirPage);
+	const setSopirPageSize = usePetugasStore((state) => state.setSopirPageSize);
+	const setKendaraanPage = usePetugasStore((state) => state.setKendaraanPage);
+	const setKendaraanPageSize = usePetugasStore(
+		(state) => state.setKendaraanPageSize,
+	);
+	const fetchAll = usePetugasStore((state) => state.fetchAll);
+	const fetchDrivers = usePetugasStore((state) => state.fetchDrivers);
+	const fetchVehicles = usePetugasStore((state) => state.fetchVehicles);
+	const fetchSummary = usePetugasStore((state) => state.fetchSummary);
 	const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
 	const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
 
-	const fetchSummary = useCallback(async () => {
-		const summaryData = await fetch("/api/petugas/summary").then((r) => r.json());
-		setSummary(summaryData);
-	}, []);
-
-	const fetchDrivers = useCallback(async (page: number, pageSize: number) => {
-		const driversData = await fetch(
-			`/api/drivers?page=${page}&pageSize=${pageSize}`,
-		).then((r) => r.json());
-		setSopirLogs(driversData.drivers ?? []);
-		setSopirPagination(driversData.pagination ?? null);
-	}, []);
-
-	const fetchVehicles = useCallback(async (page: number, pageSize: number) => {
-		const vehiclesData = await fetch(
-			`/api/vehicles?page=${page}&pageSize=${pageSize}`,
-		).then((r) => r.json());
-		setKendaraanLogs(vehiclesData.vehicles ?? []);
-		setKendaraanPagination(vehiclesData.pagination ?? null);
-	}, []);
-
-	const fetchAll = useCallback(async () => {
-		setIsLoading(true);
-		await Promise.all([
-			fetchSummary(),
-			fetchDrivers(sopirPage, sopirPageSize),
-			fetchVehicles(kendaraanPage, kendaraanPageSize),
-		]);
-		setIsLoading(false);
-	}, [
-		fetchSummary,
-		fetchDrivers,
-		fetchVehicles,
-		sopirPage,
-		sopirPageSize,
-		kendaraanPage,
-		kendaraanPageSize,
-	]);
-
 	useEffect(() => {
-		// eslint-disable-next-line react-hooks/set-state-in-effect
 		fetchAll();
-	}, [fetchAll]);
+	}, [sopirPage, sopirPageSize, kendaraanPage, kendaraanPageSize, fetchAll]);
 
 	const statsData: StatCard[] = summary
 		? [
@@ -96,7 +90,7 @@ export default function Petugas() {
 				{
 					label: "TOTAL KENDARAAN",
 					value: String(summary.totalKendaraan),
-					desc: "Unit Armada",
+					desc: "Unit Kendaraan",
 				},
 				{
 					label: "DALAM PERAWATAN",
@@ -112,7 +106,7 @@ export default function Petugas() {
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div className="space-y-1">
 					<h1 className="text-xl font-bold tracking-tight text-slate-900">
-						Petugas &amp; Armada
+						Petugas &amp; Kendaraan
 					</h1>
 					<p className="text-sm text-slate-500 font-medium">
 						Kelola pengemudi dan unit kendaraan pengiriman Rantai Pasok.
@@ -168,10 +162,6 @@ export default function Petugas() {
 					<div>
 						<div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
 							<h3 className="text-sm font-bold text-slate-900">Daftar Sopir</h3>
-							<button className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors">
-								Lihat Semua Laporan
-								<ChevronRightIcon className="w-3.5 h-3.5" />
-							</button>
 						</div>
 						<div className="overflow-x-auto w-full">
 							<table className="w-full text-left border-collapse min-w-[450px]">
@@ -225,49 +215,100 @@ export default function Petugas() {
 							</table>
 						</div>
 					</div>
-					<div className="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
-						<div className="flex items-center gap-2">
-							<span className="text-xs text-slate-400 font-medium">Tampilkan</span>
-							<select
-								value={sopirPageSize}
-								onChange={(e) => {
-									setSopirPageSize(Number(e.target.value));
-									setSopirPage(1);
-								}}
-								className="text-xs font-semibold border border-slate-200 rounded-md px-2 py-1 text-slate-700 bg-white">
-								{PAGE_SIZE_OPTIONS.map((size) => (
-									<option key={size} value={size}>
-										{size}
-									</option>
-								))}
-							</select>
-							<span className="text-xs text-slate-400 font-medium">
-								dari {sopirPagination?.totalItems ?? 0} sopir
+					<div className="p-4 bg-white border-t border-slate-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+						<div className="flex items-center gap-4 order-2 lg:order-1">
+							<span className="text-xs text-slate-500 font-medium text-center sm:text-left">
+								Menampilkan{" "}
+								<span className="font-bold text-slate-700">{sopirLogs.length}</span>{" "}
+								dari{" "}
+								<span className="font-bold text-slate-700">
+									{sopirPagination?.totalItems ?? 0}
+								</span>{" "}
+								sopir
 							</span>
+
+							<div className="flex items-center gap-2">
+								<span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+									Baris per halaman
+								</span>
+								<Select
+									value={String(sopirPageSize)}
+									onValueChange={(value) => setSopirPageSize(Number(value))}>
+									<SelectTrigger className="h-8 w-[72px] text-xs">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{PAGE_SIZE_OPTIONS.map((size) => (
+											<SelectItem key={size} value={String(size)}>
+												{size}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
 						</div>
-						<div className="flex items-center gap-2">
-							<button
-								onClick={() => setSopirPage((p) => Math.max(1, p - 1))}
-								disabled={!sopirPagination || sopirPagination.page <= 1}
-								className="p-1.5 rounded-md border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-								<ChevronLeftIcon className="w-3.5 h-3.5" />
-							</button>
-							<span className="text-xs font-semibold text-slate-600">
-								{sopirPagination?.page ?? 1} / {sopirPagination?.totalPages ?? 1}
-							</span>
-							<button
-								onClick={() =>
-									setSopirPage((p) =>
-										sopirPagination ? Math.min(sopirPagination.totalPages, p + 1) : p,
-									)
-								}
-								disabled={
-									!sopirPagination || sopirPagination.page >= sopirPagination.totalPages
-								}
-								className="p-1.5 rounded-md border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-								<ChevronRightIcon className="w-3.5 h-3.5" />
-							</button>
-						</div>
+
+						<Pagination className="order-1 lg:order-2 mx-0 w-auto">
+							<PaginationContent>
+								<PaginationItem>
+									<PaginationPrevious
+										href="#"
+										onClick={(e) => {
+											e.preventDefault();
+											if (sopirPagination && sopirPagination.page > 1)
+												setSopirPage(sopirPagination.page - 1);
+										}}
+										className={
+											!sopirPagination || sopirPagination.page <= 1
+												? "pointer-events-none opacity-50"
+												: ""
+										}
+									/>
+								</PaginationItem>
+
+								{sopirPagination &&
+									getPageNumbers(sopirPagination.page, sopirPagination.totalPages).map(
+										(pageNumber, idx) =>
+											pageNumber === "ellipsis" ? (
+												<PaginationItem key={`ellipsis-${idx}`}>
+													<PaginationEllipsis />
+												</PaginationItem>
+											) : (
+												<PaginationItem key={pageNumber}>
+													<PaginationLink
+														href="#"
+														isActive={pageNumber === sopirPagination.page}
+														onClick={(e) => {
+															e.preventDefault();
+															setSopirPage(pageNumber);
+														}}>
+														{pageNumber}
+													</PaginationLink>
+												</PaginationItem>
+											),
+									)}
+
+								<PaginationItem>
+									<PaginationNext
+										href="#"
+										onClick={(e) => {
+											e.preventDefault();
+											if (
+												sopirPagination &&
+												sopirPagination.page < sopirPagination.totalPages
+											)
+												setSopirPage(sopirPagination.page + 1);
+										}}
+										className={
+											!sopirPagination ||
+											sopirPagination.page >= sopirPagination.totalPages
+												? "pointer-events-none opacity-50"
+												: ""
+										}
+									/>
+								</PaginationItem>
+							</PaginationContent>
+						</Pagination>
 					</div>
 				</div>
 
@@ -275,10 +316,6 @@ export default function Petugas() {
 					<div>
 						<div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
 							<h3 className="text-sm font-bold text-slate-900">Daftar Kendaraan</h3>
-							<button className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors">
-								Lihat Semua Laporan
-								<ChevronRightIcon className="w-3.5 h-3.5" />
-							</button>
 						</div>
 						<div className="overflow-x-auto w-full">
 							<table className="w-full text-left border-collapse min-w-[450px]">
@@ -334,53 +371,102 @@ export default function Petugas() {
 							</table>
 						</div>
 					</div>
-					<div className="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
-						<div className="flex items-center gap-2">
-							<span className="text-xs text-slate-400 font-medium">Tampilkan</span>
-							<select
-								value={kendaraanPageSize}
-								onChange={(e) => {
-									setKendaraanPageSize(Number(e.target.value));
-									setKendaraanPage(1);
-								}}
-								className="text-xs font-semibold border border-slate-200 rounded-md px-2 py-1 text-slate-700 bg-white">
-								{PAGE_SIZE_OPTIONS.map((size) => (
-									<option key={size} value={size}>
-										{size}
-									</option>
-								))}
-							</select>
-							<span className="text-xs text-slate-400 font-medium">
-								dari {kendaraanPagination?.totalItems ?? 0} armada
+					<div className="p-4 bg-white border-t border-slate-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+						<div className="flex items-center gap-4 order-2 lg:order-1">
+							<span className="text-xs text-slate-500 font-medium text-center sm:text-left">
+								Menampilkan{" "}
+								<span className="font-bold text-slate-700">{kendaraanLogs.length}</span>{" "}
+								dari{" "}
+								<span className="font-bold text-slate-700">
+									{kendaraanPagination?.totalItems ?? 0}
+								</span>{" "}
+								kendaraan
 							</span>
+
+							<div className="flex items-center gap-2">
+								<span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+									Baris per halaman
+								</span>
+								<Select
+									value={String(kendaraanPageSize)}
+									onValueChange={(value) => setKendaraanPageSize(Number(value))}>
+									<SelectTrigger className="h-8 w-[72px] text-xs">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{PAGE_SIZE_OPTIONS.map((size) => (
+											<SelectItem key={size} value={String(size)}>
+												{size}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
 						</div>
-						<div className="flex items-center gap-2">
-							<button
-								onClick={() => setKendaraanPage((p) => Math.max(1, p - 1))}
-								disabled={!kendaraanPagination || kendaraanPagination.page <= 1}
-								className="p-1.5 rounded-md border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-								<ChevronLeftIcon className="w-3.5 h-3.5" />
-							</button>
-							<span className="text-xs font-semibold text-slate-600">
-								{kendaraanPagination?.page ?? 1} /{" "}
-								{kendaraanPagination?.totalPages ?? 1}
-							</span>
-							<button
-								onClick={() =>
-									setKendaraanPage((p) =>
-										kendaraanPagination
-											? Math.min(kendaraanPagination.totalPages, p + 1)
-											: p,
-									)
-								}
-								disabled={
-									!kendaraanPagination ||
-									kendaraanPagination.page >= kendaraanPagination.totalPages
-								}
-								className="p-1.5 rounded-md border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-								<ChevronRightIcon className="w-3.5 h-3.5" />
-							</button>
-						</div>
+
+						<Pagination className="order-1 lg:order-2 mx-0 w-auto">
+							<PaginationContent>
+								<PaginationItem>
+									<PaginationPrevious
+										href="#"
+										onClick={(e) => {
+											e.preventDefault();
+											if (kendaraanPagination && kendaraanPagination.page > 1)
+												setKendaraanPage(kendaraanPagination.page - 1);
+										}}
+										className={
+											!kendaraanPagination || kendaraanPagination.page <= 1
+												? "pointer-events-none opacity-50"
+												: ""
+										}
+									/>
+								</PaginationItem>
+
+								{kendaraanPagination &&
+									getPageNumbers(
+										kendaraanPagination.page,
+										kendaraanPagination.totalPages,
+									).map((pageNumber, idx) =>
+										pageNumber === "ellipsis" ? (
+											<PaginationItem key={`ellipsis-${idx}`}>
+												<PaginationEllipsis />
+											</PaginationItem>
+										) : (
+											<PaginationItem key={pageNumber}>
+												<PaginationLink
+													href="#"
+													isActive={pageNumber === kendaraanPagination.page}
+													onClick={(e) => {
+														e.preventDefault();
+														setKendaraanPage(pageNumber);
+													}}>
+													{pageNumber}
+												</PaginationLink>
+											</PaginationItem>
+										),
+									)}
+
+								<PaginationItem>
+									<PaginationNext
+										href="#"
+										onClick={(e) => {
+											e.preventDefault();
+											if (
+												kendaraanPagination &&
+												kendaraanPagination.page < kendaraanPagination.totalPages
+											)
+												setKendaraanPage(kendaraanPagination.page + 1);
+										}}
+										className={
+											!kendaraanPagination ||
+											kendaraanPagination.page >= kendaraanPagination.totalPages
+												? "pointer-events-none opacity-50"
+												: ""
+										}
+									/>
+								</PaginationItem>
+							</PaginationContent>
+						</Pagination>
 					</div>
 				</div>
 			</div>
@@ -390,7 +476,7 @@ export default function Petugas() {
 				onClose={() => setIsAddDriverOpen(false)}
 				onSuccess={() => {
 					setSopirPage(1);
-					fetchDrivers(1, sopirPageSize);
+					fetchDrivers();
 					fetchSummary();
 				}}
 			/>
@@ -399,7 +485,7 @@ export default function Petugas() {
 				onClose={() => setIsAddVehicleOpen(false)}
 				onSuccess={() => {
 					setKendaraanPage(1);
-					fetchVehicles(1, kendaraanPageSize);
+					fetchVehicles();
 					fetchSummary();
 				}}
 			/>
