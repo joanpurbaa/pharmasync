@@ -108,6 +108,8 @@ model Destination {
   name      String
   address   String?
   phone     String?
+  latitude  Float?
+  longitude Float?
   shipments Shipment[]
 
   @@map("destinations")
@@ -193,31 +195,44 @@ model ItemBatch {
 }
 
 model Shipment {
-  id             String          @id @default(uuid())
-  code           String          @unique
+  id             String                  @id @default(uuid())
+  code           String                  @unique
   itemId         String
-  item           Item            @relation(fields: [itemId], references: [id])
+  item           Item                    @relation(fields: [itemId], references: [id])
   quantity       Int
   destinationId  String
-  destination    Destination     @relation(fields: [destinationId], references: [id])
+  destination    Destination             @relation(fields: [destinationId], references: [id])
   scheduledAt    DateTime
   driverId       String?
-  driver         Driver?         @relation("ShipmentDriver", fields: [driverId], references: [id])
+  driver         Driver?                 @relation("ShipmentDriver", fields: [driverId], references: [id])
   vehicleId      String?
-  vehicle        Vehicle?        @relation("ShipmentVehicle", fields: [vehicleId], references: [id])
-  status         ShipmentStatus  @default(DIJADWALKAN)
-  sourceChannel  SourceChannel   @default(WEB)
+  vehicle        Vehicle?                @relation("ShipmentVehicle", fields: [vehicleId], references: [id])
+  status         ShipmentStatus          @default(DIJADWALKAN)
+  sourceChannel  SourceChannel           @default(WEB)
   createdById    String
-  createdBy      User            @relation("ShipmentCreatedBy", fields: [createdById], references: [id])
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  createdBy      User                    @relation("ShipmentCreatedBy", fields: [createdById], references: [id])
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
   stockMovements StockMovement[]
+  trackingPoints ShipmentTrackingPoint[]
 
   @@index([status])
   @@index([destinationId])
   @@index([driverId])
   @@index([vehicleId])
   @@map("shipments")
+}
+
+model ShipmentTrackingPoint {
+  id         String   @id @default(uuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id])
+  latitude   Float
+  longitude  Float
+  recordedAt DateTime @default(now())
+
+  @@index([shipmentId, recordedAt])
+  @@map("shipment_tracking_points")
 }
 
 model StockMovement {

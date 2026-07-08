@@ -22,6 +22,8 @@ import {
   Truck,
   History,
   Users,
+  Hospital,
+  Box,
 } from "lucide-react";
 
 const teams = [
@@ -59,6 +61,11 @@ const projects = [
 		icon: <Truck />,
 	},
 	{
+		name: "Mitra",
+		url: "/mitra",
+		icon: <Hospital />,
+	},
+	{
 		name: "Petugas",
 		url: "/petugas",
 		icon: <Users />,
@@ -67,6 +74,11 @@ const projects = [
 		name: "Riwayat",
 		url: "/riwayat",
 		icon: <History />,
+	},
+	{
+		name: "Visualisasi 3D",
+		url: "/warehouse",
+		icon: <Box />,
 	},
 ];
 
