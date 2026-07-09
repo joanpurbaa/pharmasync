@@ -7,7 +7,24 @@ import {
 	MapPinIcon,
 	PhoneIcon,
 	Trash2Icon,
+	PencilIcon,
 } from "lucide-react";
+import {
+	Pagination,
+	PaginationContent,
+	PaginationEllipsis,
+	PaginationItem,
+	PaginationLink,
+	PaginationNext,
+	PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import AddDestinationModal from "@/components/modal/AddDestinationModal";
 import { useMitraStore } from "@/store/useMitraStore";
 import {
@@ -21,14 +38,39 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export default function DataMitra() {
+function getPageNumbers(
+	current: number,
+	total: number,
+): (number | "ellipsis")[] {
+	const pages: (number | "ellipsis")[] = [];
+	const delta = 1;
+	for (let i = 1; i <= total; i++) {
+		if (
+			i === 1 ||
+			i === total ||
+			(i >= current - delta && i <= current + delta)
+		) {
+			pages.push(i);
+		} else if (pages[pages.length - 1] !== "ellipsis") {
+			pages.push("ellipsis");
+		}
+	}
+	return pages;
+}
+
+export default function Mitra() {
 	const {
 		destinations,
+		pagination,
 		searchQuery,
+		page,
+		pageSize,
 		isLoading,
 		deleteTargetId,
 		deleteError,
 		setSearchQuery,
+		setPage,
+		setPageSize,
 		setDeleteTargetId,
 		setDeleteError,
 		fetchDestinations,
@@ -36,17 +78,17 @@ export default function DataMitra() {
 	} = useMitraStore();
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [editTarget, setEditTarget] = useState<{
+		id: string;
+		name: string;
+		address: string | null;
+		phone: string | null;
+	} | null>(null);
 
 	useEffect(() => {
-		fetchDestinations();
-	}, [fetchDestinations]);
-
-	const filteredDestinations = destinations.filter(
-		(item) =>
-			item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			(item.address &&
-				item.address.toLowerCase().includes(searchQuery.toLowerCase())),
-	);
+		const timeout = setTimeout(fetchDestinations, 300);
+		return () => clearTimeout(timeout);
+	}, [searchQuery, page, pageSize, fetchDestinations]);
 
 	return (
 		<div className="flex flex-col w-full p-4 sm:p-6 space-y-6 bg-slate-50/50">
@@ -104,7 +146,7 @@ export default function DataMitra() {
 								</tr>
 							)}
 
-							{!isLoading && filteredDestinations.length === 0 && (
+							{!isLoading && destinations.length === 0 && (
 								<tr>
 									<td
 										colSpan={5}
@@ -115,7 +157,7 @@ export default function DataMitra() {
 							)}
 
 							{!isLoading &&
-								filteredDestinations.map((mitra) => (
+								destinations.map((mitra) => (
 									<tr key={mitra.id} className="hover:bg-slate-50/40 transition-colors">
 										<td className="px-6 py-4">
 											<div className="font-semibold text-slate-900">{mitra.name}</div>
@@ -152,15 +194,30 @@ export default function DataMitra() {
 											)}
 										</td>
 										<td className="px-6 py-4 text-right">
-											<button
-												onClick={() => {
-													setDeleteError(null);
-													setDeleteTargetId(mitra.id);
-												}}
-												className="inline-flex items-center p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-												title="Hapus Mitra">
-												<Trash2Icon className="w-4 h-4" />
-											</button>
+											<div className="inline-flex items-center gap-1">
+												<button
+													onClick={() =>
+														setEditTarget({
+															id: mitra.id,
+															name: mitra.name,
+															address: mitra.address,
+															phone: mitra.phone,
+														})
+													}
+													className="inline-flex items-center p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+													title="Edit Mitra">
+													<PencilIcon className="w-4 h-4" />
+												</button>
+												<button
+													onClick={() => {
+														setDeleteError(null);
+														setDeleteTargetId(mitra.id);
+													}}
+													className="inline-flex items-center p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+													title="Hapus Mitra">
+													<Trash2Icon className="w-4 h-4" />
+												</button>
+											</div>
 										</td>
 									</tr>
 								))}
@@ -168,14 +225,94 @@ export default function DataMitra() {
 					</table>
 				</div>
 
-				<div className="p-4 bg-white border-t border-slate-100 flex items-center justify-between">
-					<span className="text-xs text-slate-500 font-medium">
-						Total Jaringan:{" "}
-						<span className="font-bold text-slate-700">
-							{filteredDestinations.length}
-						</span>{" "}
-						Mitra
-					</span>
+				<div className="p-4 bg-white border-t border-slate-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+					<div className="flex items-center gap-4 order-2 lg:order-1">
+						<span className="text-xs text-slate-500 font-medium text-center sm:text-left">
+							Menampilkan{" "}
+							<span className="font-bold text-slate-700">{destinations.length}</span>{" "}
+							dari{" "}
+							<span className="font-bold text-slate-700">
+								{pagination?.totalItems ?? 0}
+							</span>{" "}
+							mitra
+						</span>
+
+						<div className="flex items-center gap-2">
+							<span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+								Baris per halaman
+							</span>
+							<Select
+								value={String(pageSize)}
+								onValueChange={(value) => setPageSize(Number(value))}>
+								<SelectTrigger className="h-8 w-[72px] text-xs">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="10">10</SelectItem>
+									<SelectItem value="25">25</SelectItem>
+									<SelectItem value="50">50</SelectItem>
+									<SelectItem value="100">100</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+					</div>
+
+					<Pagination className="order-1 lg:order-2 mx-0 w-auto">
+						<PaginationContent>
+							<PaginationItem>
+								<PaginationPrevious
+									href="#"
+									onClick={(e) => {
+										e.preventDefault();
+										if (pagination && pagination.page > 1) setPage(pagination.page - 1);
+									}}
+									className={
+										!pagination || pagination.page <= 1
+											? "pointer-events-none opacity-50"
+											: ""
+									}
+								/>
+							</PaginationItem>
+
+							{pagination &&
+								getPageNumbers(pagination.page, pagination.totalPages).map(
+									(pageNumber, idx) =>
+										pageNumber === "ellipsis" ? (
+											<PaginationItem key={`ellipsis-${idx}`}>
+												<PaginationEllipsis />
+											</PaginationItem>
+										) : (
+											<PaginationItem key={pageNumber}>
+												<PaginationLink
+													href="#"
+													isActive={pageNumber === pagination.page}
+													onClick={(e) => {
+														e.preventDefault();
+														setPage(pageNumber);
+													}}>
+													{pageNumber}
+												</PaginationLink>
+											</PaginationItem>
+										),
+								)}
+
+							<PaginationItem>
+								<PaginationNext
+									href="#"
+									onClick={(e) => {
+										e.preventDefault();
+										if (pagination && pagination.page < pagination.totalPages)
+											setPage(pagination.page + 1);
+									}}
+									className={
+										!pagination || pagination.page >= pagination.totalPages
+											? "pointer-events-none opacity-50"
+											: ""
+									}
+								/>
+							</PaginationItem>
+						</PaginationContent>
+					</Pagination>
 				</div>
 			</div>
 
@@ -185,6 +322,15 @@ export default function DataMitra() {
 				onSuccess={() => {
 					fetchDestinations();
 				}}
+			/>
+
+			<AddDestinationModal
+				isOpen={editTarget !== null}
+				onClose={() => setEditTarget(null)}
+				onSuccess={() => {
+					fetchDestinations();
+				}}
+				editData={editTarget}
 			/>
 
 			<AlertDialog

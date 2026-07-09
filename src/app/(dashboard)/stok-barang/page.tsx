@@ -40,7 +40,7 @@ const statusLabel: Record<ApiItem["status"], string> = {
 	AMAN: "Aman",
 	MENIPIS: "Menipis",
 	KRITIS: "Kritis",
-	PENDING: "Pending Setup",
+	PENDING: "Menunggu barang masuk",
 };
 
 const statusStyle: Record<ApiItem["status"], string> = {

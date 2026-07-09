@@ -61,7 +61,7 @@ export const useDistribusiStore = create<DistribusiStore>((set, get) => ({
 		params.set("page", String(page));
 		params.set("pageSize", String(pageSize));
 
-		const response = await fetch(`/api/destinations?${params.toString()}`);
+		const response = await fetch(`/api/distribusi?${params.toString()}`);
 		const data = await response.json();
 
 		set({

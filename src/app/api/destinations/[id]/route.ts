@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
+import { parseGoogleMapsLink } from "@/lib/parseGoogleMapsLink";
 
 export async function DELETE(
 	request: Request,
@@ -7,41 +8,65 @@ export async function DELETE(
 ) {
 	const { id } = await params;
 
-	if (!id) {
+	const linkedShipments = await db.shipment.count({
+		where: { destinationId: id },
+	});
+
+	if (linkedShipments > 0) {
 		return NextResponse.json(
-			{ error: "ID Mitra wajib disertakan" },
+			{
+				error: `Mitra ini masih dipakai di ${linkedShipments} pengiriman. Hapus atau ubah pengiriman terkait terlebih dahulu.`,
+			},
+			{ status: 409 },
+		);
+	}
+
+	await db.destination.delete({ where: { id } });
+
+	return NextResponse.json({ success: true });
+}
+
+export async function PATCH(
+	request: Request,
+	{ params }: { params: Promise<{ id: string }> },
+) {
+	const { id } = await params;
+	const body = await request.json();
+	const { name, mapsLink, address, phone } = body;
+
+	if (!name) {
+		return NextResponse.json(
+			{ error: "Nama mitra wajib diisi" },
 			{ status: 400 },
 		);
 	}
 
-	try {
-		const linkedShipments = await db.shipment.count({
-			where: { destinationId: id },
-		});
+	let coords: { latitude: number; longitude: number } | null = null;
 
-		if (linkedShipments > 0) {
+	if (mapsLink) {
+		coords = await parseGoogleMapsLink(mapsLink);
+		if (!coords) {
 			return NextResponse.json(
 				{
 					error:
-						"Mitra gagal dihapus karena masih terikat dengan riwayat atau jadwal distribusi aktif.",
+						"Tidak bisa membaca koordinat dari link tersebut. Pastikan link berasal dari tombol Bagikan di Google Maps.",
 				},
-				{ status: 400 },
+				{ status: 422 },
 			);
 		}
-
-		await db.destination.delete({
-			where: { id },
-		});
-
-		return NextResponse.json(
-			{ message: "Data mitra berhasil dihapus secara permanen" },
-			{ status: 200 },
-		);
-	} catch (error) {
-		console.error("Error backend DELETE mitra:", error);
-		return NextResponse.json(
-			{ error: "Gagal menghapus data mitra dari database server" },
-			{ status: 500 },
-		);
 	}
+
+	const destination = await db.destination.update({
+		where: { id },
+		data: {
+			name,
+			address: address || null,
+			phone: phone || null,
+			...(coords
+				? { latitude: coords.latitude, longitude: coords.longitude }
+				: {}),
+		},
+	});
+
+	return NextResponse.json({ destination });
 }

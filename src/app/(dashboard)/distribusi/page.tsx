@@ -318,10 +318,8 @@ export default function Distribusi() {
 										</td>
 										<td className="px-6 py-4 text-right">
 											<DropdownMenu>
-												<DropdownMenuTrigger>
-													<button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
-														<MoreVerticalIcon className="w-4 h-4" />
-													</button>
+												<DropdownMenuTrigger className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
+													<MoreVerticalIcon className="w-4 h-4" />
 												</DropdownMenuTrigger>
 												<DropdownMenuContent align="end" className="w-44">
 													<DropdownMenuItem

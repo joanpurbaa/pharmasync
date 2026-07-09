@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PlusIcon, XIcon } from "lucide-react";
-import AddDestinationModal from "@/components/modal/AddDestinationModal";
+import { XIcon } from "lucide-react";
 
 interface ShipmentEditData {
 	id: string;
@@ -63,7 +62,6 @@ export default function AddShipmentModal({
 	const [vehicleId, setVehicleId] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [isAddDestinationOpen, setIsAddDestinationOpen] = useState(false);
 
 	useEffect(() => {
 		if (!isOpen) return;
@@ -217,29 +215,24 @@ export default function AddShipmentModal({
 					</div>
 
 					<div className="space-y-1.5">
-						<div className="flex items-center justify-between">
-							<label className="text-xs font-medium text-slate-500">
-								Klinik Tujuan
-							</label>
-							<button
-								type="button"
-								onClick={() => setIsAddDestinationOpen(true)}
-								className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
-								<PlusIcon className="w-3 h-3" />
-								Tambah Klinik Baru
-							</button>
-						</div>
-						<select
-							value={destinationId}
-							onChange={(e) => setDestinationId(e.target.value)}
-							className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900/10">
-							<option value="">Pilih klinik tujuan</option>
-							{destinations.map((dest) => (
-								<option key={dest.id} value={dest.id}>
-									{dest.name}
-								</option>
-							))}
-						</select>
+						<label className="text-xs font-medium text-slate-500">Mitra Tujuan</label>
+						{destinations.length === 0 ? (
+							<p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+								Belum ada data mitra. Tambahkan dulu di halaman Mitra.
+							</p>
+						) : (
+							<select
+								value={destinationId}
+								onChange={(e) => setDestinationId(e.target.value)}
+								className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+								<option value="">Pilih klinik tujuan</option>
+								{destinations.map((dest) => (
+									<option key={dest.id} value={dest.id}>
+										{dest.name}
+									</option>
+								))}
+							</select>
+						)}
 					</div>
 
 					<div className="grid grid-cols-2 gap-3">
@@ -317,15 +310,6 @@ export default function AddShipmentModal({
 					</div>
 				</form>
 			</div>
-
-			<AddDestinationModal
-				isOpen={isAddDestinationOpen}
-				onClose={() => setIsAddDestinationOpen(false)}
-				onSuccess={(newDestination) => {
-					setDestinations((prev) => [...prev, newDestination]);
-					setDestinationId(newDestination.id);
-				}}
-			/>
 		</div>
 	);
 }
