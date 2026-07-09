@@ -209,7 +209,7 @@ export default function AddVehicleModal({
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							className="px-4 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors disabled:opacity-50">
+							className="px-4 py-2 text-sm font-semibold text-white bg-secondary rounded-lg shadow-sm transition-colors disabled:opacity-50">
 							{isSubmitting ? "Menyimpan..." : "Simpan Kendaraan"}
 						</button>
 					</div>

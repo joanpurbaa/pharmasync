@@ -104,7 +104,7 @@ export default function Mitra() {
 
 				<div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-stretch sm:items-center">
 					<div className="relative w-full sm:w-64">
-						<SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+						<SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-icon-default" />
 						<input
 							type="text"
 							placeholder="Cari nama klinik atau alamat..."
@@ -116,7 +116,7 @@ export default function Mitra() {
 
 					<button
 						onClick={() => setIsModalOpen(true)}
-						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors whitespace-nowrap">
+						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-secondary rounded-lg shadow-sm transition-colors whitespace-nowrap">
 						<PlusIcon className="w-4 h-4 text-white" />
 						Tambah Mitra Baru
 					</button>
@@ -165,7 +165,7 @@ export default function Mitra() {
 										<td className="px-6 py-4 max-w-xs truncate text-slate-500">
 											{mitra.address ? (
 												<div className="flex items-center gap-1.5">
-													<MapPinIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+													<MapPinIcon className="w-3.5 h-3.5 text-icon-default shrink-0" />
 													<span className="truncate">{mitra.address}</span>
 												</div>
 											) : (
@@ -175,7 +175,7 @@ export default function Mitra() {
 										<td className="px-6 py-4 text-slate-500">
 											{mitra.phone ? (
 												<div className="flex items-center gap-1.5">
-													<PhoneIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+													<PhoneIcon className="w-3.5 h-3.5 text-icon-default shrink-0" />
 													<span>{mitra.phone}</span>
 												</div>
 											) : (
@@ -184,7 +184,7 @@ export default function Mitra() {
 										</td>
 										<td className="px-6 py-4">
 											{mitra.latitude !== null && mitra.longitude !== null ? (
-												<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+												<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-primary-50 text-primary border border-primary">
 													Koordinat Terbaca
 												</span>
 											) : (
@@ -204,7 +204,7 @@ export default function Mitra() {
 															phone: mitra.phone,
 														})
 													}
-													className="inline-flex items-center p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+													className="inline-flex items-center p-1.5 text-icon-default hover:bg-slate-100 rounded-lg transition-colors"
 													title="Edit Mitra">
 													<PencilIcon className="w-4 h-4" />
 												</button>
@@ -213,7 +213,7 @@ export default function Mitra() {
 														setDeleteError(null);
 														setDeleteTargetId(mitra.id);
 													}}
-													className="inline-flex items-center p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+													className="inline-flex items-center p-1.5 text-icon-warning hover:bg-red-50 rounded-lg transition-colors"
 													title="Hapus Mitra">
 													<Trash2Icon className="w-4 h-4" />
 												</button>

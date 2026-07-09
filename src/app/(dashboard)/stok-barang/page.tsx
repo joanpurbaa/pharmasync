@@ -44,7 +44,7 @@ const statusLabel: Record<ApiItem["status"], string> = {
 };
 
 const statusStyle: Record<ApiItem["status"], string> = {
-	AMAN: "bg-emerald-50 text-emerald-700 border border-emerald-100",
+	AMAN: "bg-emeraldtext-emerald-700 border border-primary",
 	MENIPIS: "bg-amber-50 text-amber-700 border border-amber-100",
 	KRITIS: "bg-red-50 text-red-700 border border-red-100",
 	PENDING: "bg-slate-100 text-slate-700 border border-slate-200",
@@ -143,7 +143,7 @@ export default function StokBarang() {
 				</h1>
 
 				<div className="relative w-full sm:w-72">
-					<SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+					<SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-icon-default" />
 					<input
 						type="text"
 						placeholder="Cari SKU atau nama item..."
@@ -198,18 +198,18 @@ export default function StokBarang() {
 					</button>
 					<button
 						onClick={() => setIsAddItemOpen(true)}
-						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors whitespace-nowrap w-full lg:w-auto">
+						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-secondary rounded-lg shadow-sm transition-colors whitespace-nowrap w-full lg:w-auto">
 						<PlusIcon className="w-4 h-4" />
 						Tambah Item Baru
 					</button>
 				</div>
 			</div>
 
-			<div className="bg-white border border-slate-200/80 rounded-xl shadow-sm overflow-hidden flex flex-col justify-between">
+			<div className="bg-white border border-t rounded-xl overflow-hidden flex flex-col justify-between">
 				<div className="overflow-x-auto w-full">
 					<table className="w-full text-left border-collapse min-w-[980px]">
 						<thead>
-							<tr className="bg-slate-50/70 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+							<tr className="bg-muted/40 border-b border-muted/20 text-[11px] font-bold uppercase tracking-wider text-slate-400">
 								<th className="px-6 py-3.5">Nama Item</th>
 								<th className="px-6 py-3.5">Kode SKU</th>
 								<th className="px-6 py-3.5">Kategori</th>
@@ -285,13 +285,13 @@ export default function StokBarang() {
 											<span
 												className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${statusStyle[item.status]}`}>
 												{item.status === "AMAN" && (
-													<CheckCircle2Icon className="w-3.5 h-3.5 text-emerald-600" />
+													<CheckCircle2Icon className="w-3.5 h-3.5 text-primary" />
 												)}
 												{item.status === "MENIPIS" && (
-													<AlertTriangleIcon className="w-3.5 h-3.5 text-amber-600" />
+													<AlertTriangleIcon className="w-3.5 h-3.5 text-destructive" />
 												)}
 												{item.status === "KRITIS" && (
-													<AlertCircleIcon className="w-3.5 h-3.5 text-red-600" />
+													<AlertCircleIcon className="w-3.5 h-3.5 text-" />
 												)}
 												{statusLabel[item.status]}
 											</span>

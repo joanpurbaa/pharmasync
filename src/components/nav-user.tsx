@@ -70,7 +70,7 @@ export function NavUser({
           >
             <Avatar>
               <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarFallback>AU</AvatarFallback>
             </Avatar>
 
             <div className="grid flex-1 text-left text-sm leading-tight">
@@ -92,7 +92,7 @@ export function NavUser({
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar>
                     <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>CN</AvatarFallback>
+                    <AvatarFallback>AU</AvatarFallback>
                   </Avatar>
 
                   <div className="grid flex-1 text-left text-sm leading-tight">

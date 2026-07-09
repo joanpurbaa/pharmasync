@@ -99,13 +99,13 @@ export default function Riwayat() {
 						Riwayat Audit
 					</h1>
 					<div className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-500 bg-white border border-slate-200 rounded-lg shadow-sm w-fit">
-						<CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
+						<CalendarIcon className="w-3.5 h-3.5 text-icon-default" />
 						Oktober 2023 - Sekarang
 					</div>
 				</div>
 
 				<div className="relative w-full md:w-72">
-					<SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+					<SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-icon-default" />
 					<input
 						type="text"
 						placeholder="Cari log atau nama user..."
@@ -123,7 +123,7 @@ export default function Riwayat() {
 					</p>
 					<div className="flex flex-wrap gap-2">
 						<span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-full text-slate-700 shadow-sm">
-							<span className="h-2 w-2 rounded-full bg-emerald-500" />
+							<span className="h-2 w-2 rounded-full bg-primary" />
 							{stats.todayCount} Transaksi Hari Ini
 						</span>
 						<span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-full text-slate-700 shadow-sm">
@@ -134,13 +134,13 @@ export default function Riwayat() {
 				</div>
 
 				<div className="flex items-center gap-2 w-full sm:w-auto justify-start sm:justify-end lg:self-auto">
-					<button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors shadow-sm flex-1 sm:flex-initial">
-						<SlidersHorizontalIcon className="w-3.5 h-3.5" />
+					<button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white text-black  rounded-lg transition-colors shadow-sm flex-1 sm:flex-initial">
+						<SlidersHorizontalIcon className="w-3.5 h-3.5 text-icon-default" />
 						Filter
 					</button>
-					<button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors flex-1 sm:flex-initial whitespace-nowrap">
-						<DownloadIcon className="w-3.5 h-3.5" />
-						Ekspor Laporan
+					<button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-secondary text-black rounded-lg shadow-sm transition-colors flex-1 sm:flex-initial whitespace-nowrap">
+						<DownloadIcon className="w-3.5 h-3.5 text-icon-default" />
+						Export PDF
 					</button>
 				</div>
 			</div>
@@ -234,14 +234,14 @@ export default function Riwayat() {
 										</td>
 
 										<td className="px-6 py-4">
-											<div className="flex justify-center text-slate-500">
+											<div className="flex justify-center text-icon-default">
 												{log.source === "web" ? (
 													<span title="Web Admin Panel">
-														<MonitorIcon className="w-4 h-4 text-slate-700" />
+														<MonitorIcon className="w-4 h-4 text-icon-default" />
 													</span>
 												) : (
 													<span title="Automated System / Robot">
-														<BotIcon className="w-4 h-4 text-slate-600" />
+														<BotIcon className="w-4 h-4 text-icon-default" />
 													</span>
 												)}
 											</div>
@@ -345,8 +345,8 @@ export default function Riwayat() {
 								<span className="text-sm font-medium text-slate-500">
 									{metric.title}
 								</span>
-								<div className="p-2 rounded-lg bg-slate-50 border border-slate-100 text-slate-800 shrink-0">
-									<Icon className="w-4 h-4" />
+								<div className="p-2 rounded-lg bg-slate-50 border border-slate-100 text-icon-default shrink-0">
+									<Icon className="w-4 h-4 text-icon-default" />
 								</div>
 							</div>
 							<div className="mt-4">

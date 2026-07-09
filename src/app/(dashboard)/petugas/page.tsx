@@ -103,12 +103,13 @@ export default function Petugas() {
 
 	return (
 		<div className="flex flex-col w-full p-4 sm:p-6 space-y-6">
+			{/* Header */}
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div className="space-y-1">
-					<h1 className="text-xl font-bold tracking-tight text-slate-900">
+					<h1 className="text-xl font-bold tracking-tight text-foreground">
 						Petugas &amp; Kendaraan
 					</h1>
-					<p className="text-sm text-slate-500 font-medium">
+					<p className="text-sm text-muted-foreground font-medium">
 						Kelola pengemudi dan unit kendaraan pengiriman Rantai Pasok.
 					</p>
 				</div>
@@ -116,17 +117,18 @@ export default function Petugas() {
 				<div className="flex items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
 					<button
 						onClick={() => setIsAddVehicleOpen(true)}
-						className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors shadow-sm">
+						className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-foreground bg-card border border-border hover:bg-muted rounded-lg shadow-sm transition-colors">
 						Tambah Kendaraan
 					</button>
 					<button
 						onClick={() => setIsAddDriverOpen(true)}
-						className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors whitespace-nowrap">
+						className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-primary-foreground bg-secondary rounded-lg shadow-sm transition-colors whitespace-nowrap">
 						Tambah Sopir
 					</button>
 				</div>
 			</div>
 
+			{/* Stats Cards */}
 			<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
 				{statsData.map((stat, idx) => {
 					const Icon =
@@ -134,21 +136,26 @@ export default function Petugas() {
 					return (
 						<div
 							key={idx}
-							className="p-5 bg-white border border-slate-200/80 rounded-xl shadow-sm flex flex-col justify-between">
+							className="p-5 bg-card border border-border rounded-xl shadow-xs flex flex-col justify-between">
 							<div className="flex items-start justify-between">
-								<span className="text-sm font-medium text-slate-500">{stat.label}</span>
-								<div className="p-2 rounded-lg bg-slate-50 border border-slate-100 text-slate-800 shrink-0">
-									<Icon
-										className={`w-4 h-4 ${stat.isWarning ? "text-red-500" : "text-slate-600"}`}
-									/>
+								<span className="text-sm font-medium text-muted-foreground">
+									{stat.label}
+								</span>
+								<div
+									className={`p-2 rounded-lg ${
+										stat.isWarning ? "text-icon-warning" : "text-icon-default"
+									} shrink-0`}>
+									<Icon className="w-4 h-4" />
 								</div>
 							</div>
 							<div className="mt-4">
 								<span
-									className={`text-3xl font-bold tracking-tight ${stat.isWarning ? "text-red-600" : "text-slate-900"}`}>
+									className={`text-3xl font-bold tracking-tight ${
+										stat.isWarning ? "text-destructive" : "text-foreground"
+									}`}>
 									{stat.value}
 								</span>
-								<p className="text-xs mt-1 font-medium text-slate-400 line-clamp-1">
+								<p className="text-xs mt-1 font-medium text-muted-foreground line-clamp-1">
 									{stat.desc}
 								</p>
 							</div>
@@ -157,32 +164,34 @@ export default function Petugas() {
 				})}
 			</div>
 
+			{/* Tables */}
 			<div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-				<div className="bg-white border border-slate-200/80 rounded-xl shadow-sm overflow-hidden flex flex-col justify-between">
+				{/* Sopir Table */}
+				<div className="bg-card border border-border rounded-xl shadow-xs overflow-hidden flex flex-col justify-between">
 					<div>
-						<div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
-							<h3 className="text-sm font-bold text-slate-900">Daftar Sopir</h3>
+						<div className="p-4 border-b border-border flex items-center justify-between bg-card">
+							<h3 className="text-sm font-bold text-foreground">Daftar Sopir</h3>
 						</div>
 						<div className="overflow-x-auto w-full">
 							<table className="w-full text-left border-collapse min-w-[450px]">
 								<thead>
-									<tr className="bg-slate-50/70 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+									<tr className="bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
 										<th className="px-6 py-3.5">Nama / No. SIM</th>
 										<th className="px-6 py-3.5">Kontak</th>
 										<th className="px-6 py-3.5">Kendaraan</th>
 									</tr>
 								</thead>
-								<tbody className="divide-y divide-slate-100 text-sm text-slate-700">
+								<tbody className="divide-y divide-border text-sm text-foreground">
 									{isLoading && (
 										<tr>
-											<td colSpan={3} className="px-6 py-6 text-center text-slate-400">
+											<td colSpan={3} className="px-6 py-6 text-center text-muted-foreground">
 												Memuat...
 											</td>
 										</tr>
 									)}
 									{!isLoading && sopirLogs.length === 0 && (
 										<tr>
-											<td colSpan={3} className="px-6 py-6 text-center text-slate-400">
+											<td colSpan={3} className="px-6 py-6 text-center text-muted-foreground">
 												Belum ada sopir terdaftar.
 											</td>
 										</tr>
@@ -191,12 +200,16 @@ export default function Petugas() {
 										sopirLogs.map((sopir) => (
 											<tr
 												key={sopir.id}
-												className="hover:bg-slate-50/40 transition-colors">
+												className="hover:bg-muted/20 transition-colors">
 												<td className="px-6 py-4">
-													<div className="font-semibold text-slate-900">{sopir.nama}</div>
-													<div className="text-xs text-slate-400 mt-0.5">{sopir.sim}</div>
+													<div className="font-semibold text-foreground">
+														{sopir.nama}
+													</div>
+													<div className="text-xs text-muted-foreground mt-0.5">
+														{sopir.sim}
+													</div>
 												</td>
-												<td className="px-6 py-4 text-slate-500 font-medium">
+												<td className="px-6 py-4 text-muted-foreground font-medium">
 													{sopir.kontak}
 												</td>
 												<td className="px-6 py-4">
@@ -215,20 +228,22 @@ export default function Petugas() {
 							</table>
 						</div>
 					</div>
-					<div className="p-4 bg-white border-t border-slate-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+
+					{/* Sopir Pagination */}
+					<div className="p-4 bg-card border-t border-border flex flex-col lg:flex-row items-center justify-between gap-4">
 						<div className="flex items-center gap-4 order-2 lg:order-1">
-							<span className="text-xs text-slate-500 font-medium text-center sm:text-left">
+							<span className="text-xs text-muted-foreground font-medium text-center sm:text-left">
 								Menampilkan{" "}
-								<span className="font-bold text-slate-700">{sopirLogs.length}</span>{" "}
+								<span className="font-bold text-foreground">{sopirLogs.length}</span>{" "}
 								dari{" "}
-								<span className="font-bold text-slate-700">
+								<span className="font-bold text-foreground">
 									{sopirPagination?.totalItems ?? 0}
 								</span>{" "}
 								sopir
 							</span>
 
 							<div className="flex items-center gap-2">
-								<span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+								<span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
 									Baris per halaman
 								</span>
 								<Select
@@ -312,45 +327,50 @@ export default function Petugas() {
 					</div>
 				</div>
 
-				<div className="bg-white border border-slate-200/80 rounded-xl shadow-sm overflow-hidden flex flex-col justify-between">
+				{/* Kendaraan Table */}
+				<div className="bg-card border border-border rounded-xl shadow-xs overflow-hidden flex flex-col justify-between">
 					<div>
-						<div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
-							<h3 className="text-sm font-bold text-slate-900">Daftar Kendaraan</h3>
+						<div className="p-4 border-b border-border flex items-center justify-between bg-card">
+							<h3 className="text-sm font-bold text-foreground">
+								Daftar Kendaraan
+							</h3>
 						</div>
 						<div className="overflow-x-auto w-full">
 							<table className="w-full text-left border-collapse min-w-[450px]">
 								<thead>
-									<tr className="bg-slate-50/70 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+									<tr className="bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
 										<th className="px-6 py-3.5">Plat / Jenis</th>
 										<th className="px-6 py-3.5">Sopir</th>
 										<th className="px-6 py-3.5">Status</th>
 									</tr>
 								</thead>
-								<tbody className="divide-y divide-slate-100 text-sm text-slate-700">
+								<tbody className="divide-y divide-border text-sm text-foreground">
 									{isLoading && (
 										<tr>
-											<td colSpan={3} className="px-6 py-6 text-center text-slate-400">
+											<td colSpan={3} className="px-6 py-6 text-center text-muted-foreground">
 												Memuat...
 											</td>
 										</tr>
 									)}
 									{!isLoading && kendaraanLogs.length === 0 && (
 										<tr>
-											<td colSpan={3} className="px-6 py-6 text-center text-slate-400">
+											<td colSpan={3} className="px-6 py-6 text-center text-muted-foreground">
 												Belum ada kendaraan terdaftar.
 											</td>
 										</tr>
 									)}
 									{!isLoading &&
 										kendaraanLogs.map((unit) => (
-											<tr key={unit.id} className="hover:bg-slate-50/40 transition-colors">
+											<tr key={unit.id} className="hover:bg-muted/20 transition-colors">
 												<td className="px-6 py-4">
-													<div className="font-semibold text-slate-900">{unit.plat}</div>
-													<div className="text-xs text-slate-400 mt-0.5">
+													<div className="font-semibold text-foreground">
+														{unit.plat}
+													</div>
+													<div className="text-xs text-muted-foreground mt-0.5">
 														{unit.model} &bull; {unit.jenis}
 													</div>
 												</td>
-												<td className="px-6 py-4 text-slate-500 font-medium">
+												<td className="px-6 py-4 text-muted-foreground font-medium">
 													{unit.sopir}
 												</td>
 												<td className="px-6 py-4">
@@ -371,20 +391,24 @@ export default function Petugas() {
 							</table>
 						</div>
 					</div>
-					<div className="p-4 bg-white border-t border-slate-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+
+					{/* Kendaraan Pagination */}
+					<div className="p-4 bg-card border-t border-border flex flex-col lg:flex-row items-center justify-between gap-4">
 						<div className="flex items-center gap-4 order-2 lg:order-1">
-							<span className="text-xs text-slate-500 font-medium text-center sm:text-left">
+							<span className="text-xs text-muted-foreground font-medium text-center sm:text-left">
 								Menampilkan{" "}
-								<span className="font-bold text-slate-700">{kendaraanLogs.length}</span>{" "}
+								<span className="font-bold text-foreground">
+									{kendaraanLogs.length}
+								</span>{" "}
 								dari{" "}
-								<span className="font-bold text-slate-700">
+								<span className="font-bold text-foreground">
 									{kendaraanPagination?.totalItems ?? 0}
 								</span>{" "}
 								kendaraan
 							</span>
 
 							<div className="flex items-center gap-2">
-								<span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+								<span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
 									Baris per halaman
 								</span>
 								<Select
@@ -471,6 +495,7 @@ export default function Petugas() {
 				</div>
 			</div>
 
+			{/* Modals */}
 			<AddDriverModal
 				isOpen={isAddDriverOpen}
 				onClose={() => setIsAddDriverOpen(false)}

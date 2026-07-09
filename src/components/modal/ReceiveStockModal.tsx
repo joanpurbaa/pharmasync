@@ -186,7 +186,7 @@ export default function ReceiveStockModal({
 								{showResults && (
 									<div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-100">
 										<div className="flex items-center border-b border-slate-100 px-3">
-											<SearchIcon className="mr-2 h-4 w-4 shrink-0 opacity-50 text-slate-500" />
+											<SearchIcon className="mr-2 h-4 w-4 shrink-0 opacity-50 text-icon-default" />
 											<input
 												type="text"
 												placeholder="Cari SKU atau nama item..."
@@ -327,7 +327,7 @@ export default function ReceiveStockModal({
 						<button
 							type="submit"
 							disabled={!selectedItem || isSubmitting}
-							className="px-4 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors disabled:opacity-50">
+							className="px-4 py-2 text-sm font-semibold text-white bg-secondary rounded-lg shadow-sm transition-colors disabled:opacity-50">
 							{isSubmitting ? "Menyimpan..." : "Simpan Barang Masuk"}
 						</button>
 					</div>
