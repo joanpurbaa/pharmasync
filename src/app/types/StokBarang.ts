@@ -15,6 +15,10 @@ export interface ApiItem {
 	nearestExpiry: string | null;
 	isExpiringSoon: boolean;
 	updatedAt: string;
+	minThreshold: number;
+	criticalThreshold: number;
+	expiryWarningDays: number;	
+	registrationNumber: string | null;
 }
 
 export interface Pagination {
