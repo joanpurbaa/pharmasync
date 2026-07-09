@@ -71,15 +71,20 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
 
 async function callInternalApi(path: string, init?: RequestInit) {
 	const base = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:3000";
-	const res = await fetch(`${base}${path}`, {
-		...init,
-		headers: {
-			"Content-Type": "application/json",
-			"x-internal-secret": process.env.INTERNAL_API_SECRET ?? "",
-			...(init?.headers ?? {}),
-		},
-	});
-	return res.json();
+	try {
+		const res = await fetch(`${base}${path}`, {
+			...init,
+			headers: {
+				"Content-Type": "application/json",
+				"x-internal-secret": process.env.INTERNAL_API_SECRET ?? "",
+				...(init?.headers ?? {}),
+			},
+		});
+		return res.json();
+	} catch (err) {
+		console.error("Gagal callInternalApi:", err);
+		return { error: "Failed to fetch internal API data" };
+	}
 }
 
 async function executeTool(name: string, args: any) {
@@ -107,21 +112,30 @@ async function executeTool(name: string, args: any) {
 }
 
 async function sendTelegramMessage(chatId: number, text: string) {
-	await fetch(
-		`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
-		{
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ chat_id: chatId, text, parse_mode: "Markdown" }),
-		},
-	);
+	try {
+		await fetch(
+			`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ chat_id: chatId, text, parse_mode: "Markdown" }),
+			},
+		);
+	} catch (err) {
+		console.error("Gagal kirim pesan ke Telegram API:", err);
+	}
 }
 
 export async function POST(req: NextRequest) {
 	try {
 		const body = await req.json();
+
+		if (!body || !body.message) {
+			return NextResponse.json({ ok: true });
+		}
+
 		const message = body.message;
-		if (!message?.text) return NextResponse.json({ ok: true });
+		if (!message.text) return NextResponse.json({ ok: true });
 
 		const chatId = message.chat.id;
 		const userText = message.text;
@@ -186,7 +200,7 @@ export async function POST(req: NextRequest) {
 				"🤖 Maaf, terjadi kendala saat memproses instruksi ke database dashboard.",
 		);
 	} catch (error) {
-		console.error("Error Telegram Webhook:", error);
+		console.error("Error global on Telegram Webhook Route:", error);
 	}
 
 	return NextResponse.json({ ok: true });
