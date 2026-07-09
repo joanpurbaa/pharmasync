@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Html } from "@react-three/drei";
@@ -9,172 +7,268 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type RackId = "leftRack" | "middleRack" | "rightRack";
-type SlotId = string;
+type RackId = "leftRack" | "middleRack" | "rightRack" | "right2Rack";
 
-interface ItemData {
+interface WarehouseItem {
   id: string;
-  rackId: RackId;
-  slotId: SlotId;
   itemName: string;
   stock: number;
   category: string;
   description: string;
+  rackIndex: number;
+  slotIndex: number;
+  position: [number, number, number];
+  boxSize?: [number, number, number]; // [width, height, depth] dunia
+  expiryDate: string;
 }
 
-interface RackCameraPreset {
-  camera: [number, number, number];
-  target: [number, number, number];
-}
-
-interface RackMetadata {
-  rows: number;
-  columns: number;
-  levels: number;
+interface RackLayout {
+  id: RackId;
+  center: [number, number, number];
   origin: [number, number, number];
   spacing: [number, number, number];
+  width: number;
+  height: number;
+  depth: number;
 }
 
-// ─── Rack slot metadata and slot generator ────────────────────────────────
+interface ShelfBatchPayload {
+  batchId: string;
+  itemId: string;
+  itemName: string;
+  category: string;
+  description: string | null;
+  quantityRemaining: number;
+  expiryDate: string;
+  receivedAt: string;
+}
 
-const RACK_METADATA: Record<RackId, RackMetadata> = {
-  leftRack: {
-    rows: 4,
-    columns: 5,
-    levels: 3,
-    origin: [15, 30, 75],
-    spacing: [10, 4, 10],
-  },
-  middleRack: {
-    rows: 4,
-    columns: 5,
-    levels: 3,
-    origin: [60, 30, 100],
-    spacing: [10, 4, 10],
-  },
-  rightRack: {
-    rows: 4,
-    columns: 5,
-    levels: 3,
-    origin: [105, 30, 110],
-    spacing: [10, 4, 10],
-  },
+// ─── Configuration ────────────────────────────────────────────────────────
+
+const SHELF_LAYOUT_CONFIG = {
+  rows: 4,
+  columns: 5,
+  levels: 3,
+  rackPaddingRatio: 0.04,
+  depthForwardRatio: 0.55,
+  yOffsetRatio: 0.3,
 };
 
-function getSlotPosition(rackId: RackId, slotId: SlotId): [number, number, number] {
-  const metadata = RACK_METADATA[rackId];
-  const [rowText, columnText, levelText] = slotId.split("-");
-  const row = Number.parseInt(rowText ?? "0", 10);
-  const column = Number.parseInt(columnText ?? "0", 10);
-  const level = Number.parseInt(levelText ?? "0", 10);
-
-  if (
-    Number.isNaN(row) ||
-    Number.isNaN(column) ||
-    Number.isNaN(level) ||
-    row < 0 ||
-    row >= metadata.rows ||
-    column < 0 ||
-    column >= metadata.columns ||
-    level < 0 ||
-    level >= metadata.levels
-  ) {
-    return metadata.origin;
-  }
-
-  return [
-    metadata.origin[0] + column * metadata.spacing[0],
-    metadata.origin[1] + level * metadata.spacing[1],
-    metadata.origin[2] + row * metadata.spacing[2],
-  ];
-}
-
-function getItemColor(item: ItemData) {
-  if (item.category.toLowerCase().includes("tablet")) return "#ef4444";
-  if (item.category.toLowerCase().includes("antibi")) return "#38bdf8";
-  return "#22c55e";
-}
-
-// ─── Initial item definitions (slot-based, database-friendly) ───────────
-
-const INITIAL_ITEMS: ItemData[] = [
-  {
-    id: "paracetamol",
-    rackId: "leftRack",
-    slotId: "0-0-0",
-    itemName: "Paracetamol",
-    stock: 18,
-    category: "Tablet",
-    description:
-      "Stok kritis di bawah ambang batas minimum. Butuh restock segera.",
-  },
-  {
-    id: "amoxicillin",
-    rackId: "middleRack",
-    slotId: "1-1-0",
-    itemName: "Amoxicillin",
-    stock: 56,
-    category: "Antibiotik",
-    description: "Stok dalam batas aman untuk operasional bulanan.",
-  },
-  {
-    id: "sirup",
-    rackId: "rightRack",
-    slotId: "0-2-1",
-    itemName: "Sirup Paracetamol",
-    stock: 34,
-    category: "Cair",
-    description: "Penyimpanan suhu ruangan optimal. Stok stabil.",
-  },
-];
-
-// ─── Camera presets for each rack ───────────────────────────────────────────
-
-const RACK_CAMERA_PRESETS: Record<RackId, RackCameraPreset> = {
-  leftRack: {
-    camera: [25, 45, 130],
-    target: [15, 30, 75],
-  },
-  middleRack: {
-    camera: [70, 55, 155],
-    target: [60, 35, 100],
-  },
-  rightRack: {
-    camera: [115, 50, 140],
-    target: [105, 35, 110],
-  },
+const BOX_DIMENSION_RATIOS = {
+  widthRatio: 0.92,
+  heightRatio: 0.45,
+  depthRatio: 0.65,
 };
 
-const OVERVIEW_CAMERA: [number, number, number] = [90, 110, 180];
-const OVERVIEW_TARGET: [number, number, number] = [40, 45, 75];
+const SELECTED_SCALE_BOOST = 1.12;
 
-// ─── Animation constants ────────────────────────────────────────────────────
+const CAMERA_CONFIG = {
+  focusOffsetXFactor: 0.6,
+  focusOffsetYFactor: 1.5,
+  focusOffsetZFactor: 4.0,
+};
 
 const LERP_FACTOR = 0.06;
 const ANIMATION_THRESHOLD = 0.1;
 const MAX_ANIMATION_FRAMES = 240;
 
-// ─── Names of the dummy boxes inside the GLB to be hidden ───────────────────
+const RACK_NODE_NAMES = ["LeftRack", "MIddleRack", "RightRack", "Right2Rack"];
 
-const DUMMY_BOX_NAMES = ["Material2_10", "Material2_11", "Material2_12"];
+// ─── Color by stock ──────────────────────────────────────────────────────
 
-// ─── Camera controller (unchanged) ──────────────────────────────────────────
+function getItemColor(stock: number): string {
+  if (stock <= 20) return "#ef4444";   // merah – kritis
+  if (stock <= 100) return "#f59e0b";  // kuning – menipis
+  return "#22c55e";                    // hijau – aman
+}
+
+// ─── Rack builder from GLB nodes ──────────────────────────────────────────
+
+function buildRacksFromNodes(scene: THREE.Object3D): RackLayout[] {
+  const racks: RackLayout[] = [];
+
+  scene.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return;
+    if (!RACK_NODE_NAMES.includes(child.name)) return;
+
+    const box = new THREE.Box3().setFromObject(child);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+
+    const pad =
+      Math.min(size.x, size.y, size.z) * SHELF_LAYOUT_CONFIG.rackPaddingRatio;
+
+    const width = Math.max(size.x - pad * 2, 1);
+    const height = Math.max(size.y - pad * 2, 1);
+    const depth = Math.max(size.z - pad * 2, 1);
+
+    const slotWidth = width / SHELF_LAYOUT_CONFIG.columns;
+    const slotHeight = height / SHELF_LAYOUT_CONFIG.levels;
+    const slotDepth = depth / SHELF_LAYOUT_CONFIG.rows;
+
+    const origin: [number, number, number] = [
+      box.min.x + pad + slotWidth / 2,
+      box.min.y + pad + slotHeight / 2,
+      box.min.z + pad + slotDepth / 2,
+    ];
+
+    racks.push({
+      id: child.name as RackId,
+      center: [center.x, center.y, center.z],
+      origin,
+      spacing: [slotWidth, slotHeight, slotDepth],
+      width,
+      height,
+      depth,
+    });
+  });
+
+  racks.sort(
+    (a, b) => RACK_NODE_NAMES.indexOf(a.id) - RACK_NODE_NAMES.indexOf(b.id)
+  );
+
+  return racks;
+}
+
+// ─── Slot position ───────────────────────────────────────────────────────
+
+function getSlotPosition(
+  rack: RackLayout,
+  slotIndex: number
+): [number, number, number] {
+  const totalSlotsPerLevel =
+    SHELF_LAYOUT_CONFIG.rows * SHELF_LAYOUT_CONFIG.columns;
+  const level = Math.floor(slotIndex / totalSlotsPerLevel);
+  const remainder = slotIndex % totalSlotsPerLevel;
+  const row = Math.floor(remainder / SHELF_LAYOUT_CONFIG.columns);
+  const column = remainder % SHELF_LAYOUT_CONFIG.columns;
+
+  const position: [number, number, number] = [
+    rack.origin[0] + column * rack.spacing[0],
+    rack.origin[1] + level * rack.spacing[1],
+    rack.origin[2] + row * rack.spacing[2],
+  ];
+
+  position[2] += rack.spacing[2] * SHELF_LAYOUT_CONFIG.depthForwardRatio;
+  position[1] += rack.spacing[1] * SHELF_LAYOUT_CONFIG.yOffsetRatio;
+
+  return position;
+}
+
+// ─── Build items ─────────────────────────────────────────────────────────
+
+function buildWarehouseItems(
+  batches: ShelfBatchPayload[],
+  racks: RackLayout[]
+): WarehouseItem[] {
+  const slotPool = racks.flatMap((_, rackIndex) =>
+    Array.from(
+      {
+        length:
+          SHELF_LAYOUT_CONFIG.rows *
+          SHELF_LAYOUT_CONFIG.columns *
+          SHELF_LAYOUT_CONFIG.levels,
+      },
+      (_, slotIndex) => ({
+        rackIndex,
+        slotIndex,
+      })
+    )
+  );
+
+  return batches
+    .sort(
+      (a, b) =>
+        new Date(a.receivedAt).getTime() - new Date(b.receivedAt).getTime()
+    )
+    .map((batch, index) => {
+      const slot = slotPool[index];
+      const rack = racks[slot.rackIndex];
+      const pos = getSlotPosition(rack, slot.slotIndex);
+
+      const boxWidth = rack.spacing[0] * BOX_DIMENSION_RATIOS.widthRatio;
+      const boxHeight = rack.spacing[2] * BOX_DIMENSION_RATIOS.heightRatio;
+      const boxDepth = rack.spacing[1] * BOX_DIMENSION_RATIOS.depthRatio;
+
+      return {
+        id: batch.batchId,
+        itemName: batch.itemName,
+        stock: batch.quantityRemaining,
+        category: batch.category,
+        description: batch.description ?? "Tidak ada deskripsi",
+        rackIndex: slot.rackIndex,
+        slotIndex: slot.slotIndex,
+        position: pos,
+        boxSize: [boxWidth, boxHeight, boxDepth],
+        expiryDate: batch.expiryDate,
+      };
+    });
+}
+
+// ─── API data loader ─────────────────────────────────────────────────────
+
+async function loadWarehouseBatches(): Promise<ShelfBatchPayload[]> {
+  const response = await fetch("/api/warehouse", {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Gagal mengambil data warehouse");
+  }
+
+  const payload = (await response.json()) as ShelfBatchPayload[];
+
+  return payload.sort(
+    (a, b) =>
+      new Date(a.receivedAt).getTime() - new Date(b.receivedAt).getTime()
+  );
+}
+
+// ─── Camera focus for selected box ───────────────────────────────────────
+
+function getBoxFocusCamera(
+  boxPosition: THREE.Vector3,
+  boxSize: [number, number, number]
+): { camera: [number, number, number]; target: [number, number, number] } {
+  const [w, h, d] = boxSize;
+
+  const target: [number, number, number] = [
+    boxPosition.x,
+    boxPosition.y,
+    boxPosition.z,
+  ];
+
+  const camera: [number, number, number] = [
+    boxPosition.x + w * CAMERA_CONFIG.focusOffsetXFactor,
+    boxPosition.y + h * CAMERA_CONFIG.focusOffsetYFactor,
+    boxPosition.z + d * CAMERA_CONFIG.focusOffsetZFactor,
+  ];
+
+  return { camera, target };
+}
+
+// ─── Camera controller ────────────────────────────────────────────────────
 
 function CameraController({
   selectedId,
   controlsRef,
   items,
+  racks,
+  overviewCamera,
+  overviewTarget,
 }: {
   selectedId: string | null;
   controlsRef: React.MutableRefObject<OrbitControlsImpl | null>;
-  items: ItemData[];
+  items: WarehouseItem[];
+  racks: RackLayout[];
+  overviewCamera: [number, number, number];
+  overviewTarget: [number, number, number];
 }) {
   const isAnimating = React.useRef(false);
   const frameCount = React.useRef(0);
   const targetCameraPos = React.useRef(new THREE.Vector3());
   const targetLookAt = React.useRef(new THREE.Vector3());
 
-  // Stop animation on any user interaction with OrbitControls
   React.useEffect(() => {
     const controls = controlsRef.current;
     if (!controls) return;
@@ -187,7 +281,6 @@ function CameraController({
     return () => controls.removeEventListener("start", stop);
   }, [controlsRef]);
 
-  // Restart animation when selectedId changes
   React.useEffect(() => {
     isAnimating.current = true;
     frameCount.current = 0;
@@ -205,15 +298,16 @@ function CameraController({
     }
 
     if (selectedId) {
-      const item = items.find((i) => i.id === selectedId);
-      if (item) {
-        const preset = RACK_CAMERA_PRESETS[item.rackId];
-        targetCameraPos.current.set(...preset.camera);
-        targetLookAt.current.set(...preset.target);
+      const item = items.find((entry) => entry.id === selectedId);
+      if (item && item.boxSize) {
+        const pos = new THREE.Vector3(...item.position);
+        const { camera: camPos, target } = getBoxFocusCamera(pos, item.boxSize);
+        targetCameraPos.current.set(...camPos);
+        targetLookAt.current.set(...target);
       }
     } else {
-      targetCameraPos.current.set(...OVERVIEW_CAMERA);
-      targetLookAt.current.set(...OVERVIEW_TARGET);
+      targetCameraPos.current.set(...overviewCamera);
+      targetLookAt.current.set(...overviewTarget);
     }
 
     camera.position.lerp(targetCameraPos.current, LERP_FACTOR);
@@ -236,66 +330,137 @@ function CameraController({
 function WarehouseScene({
   selectedId,
   setSelectedId,
-  items,
+  batches,
+  focusedId,
+  onLayoutReady,
+  onItemsReady,
 }: {
   selectedId: string | null;
   setSelectedId: React.Dispatch<React.SetStateAction<string | null>>;
-  items: ItemData[];
+  batches: ShelfBatchPayload[];
+  focusedId: string | null;
+  onLayoutReady: (
+    racks: RackLayout[],
+    camera: [number, number, number],
+    target: [number, number, number]
+  ) => void;
+  onItemsReady: (items: WarehouseItem[]) => void;
 }) {
   const controlsRef = React.useRef<OrbitControlsImpl>(null);
-  const { scene } = useGLTF("/models/warehousecompres.glb") as { scene: THREE.Group };
+  const instancedMeshRef = React.useRef<THREE.InstancedMesh>(null);
+  const { scene } = useGLTF("/models/warehousecompressed2.glb") as {
+    scene: THREE.Group;
+  };
   const [hoveredId, setHoveredId] = React.useState<string | null>(null);
+  const [racks, setRacks] = React.useState<RackLayout[]>([]);
+  const [overviewCamera, setOverviewCamera] = React.useState<
+    [number, number, number]
+  >([90, 110, 180]);
+  const [overviewTarget, setOverviewTarget] = React.useState<
+    [number, number, number]
+  >([40, 45, 75]);
 
-  // ── 1. Hide the dummy placeholder boxes – once, when the scene is loaded ──
   React.useEffect(() => {
-    scene.traverse((child) => {
-      if (child instanceof THREE.Mesh && DUMMY_BOX_NAMES.includes(child.name)) {
-        child.visible = false;
-      }
-    });
-  }, [scene]);
+    const nextRacks = buildRacksFromNodes(scene);
+    const overview = buildOverviewCamera(nextRacks);
 
-  // ── 2. Generate materials for each item (reactive to selection) ──────────
-  const materials = React.useMemo(() => {
-    const map: Record<string, THREE.MeshStandardMaterial> = {};
-    items.forEach((item) => {
-      const color = getItemColor(item);
-      const mat = new THREE.MeshStandardMaterial({
-        color,
-        emissive: color,
-        emissiveIntensity: 0.1,
+    setRacks(nextRacks);
+    setOverviewCamera(overview.camera);
+    setOverviewTarget(overview.target);
+    onLayoutReady(nextRacks, overview.camera, overview.target);
+  }, [scene, onLayoutReady]);
+
+  const renderItems = React.useMemo(() => {
+    if (!racks || racks.length === 0) return [];
+    return buildWarehouseItems(batches, racks);
+  }, [batches, racks]);
+
+  React.useEffect(() => {
+    onItemsReady(renderItems);
+  }, [renderItems, onItemsReady]);
+
+  const itemRenderData = React.useMemo(
+    () =>
+      renderItems.map((item) => ({
+        id: item.id,
+        position: item.position,
+        // warna berdasarkan stok, bukan kategori
+        color: getItemColor(item.stock),
+        isSelected: selectedId === item.id,
+        isHovered: hoveredId === item.id,
+        isFocused: focusedId === item.id,
+        boxSize: item.boxSize!,
+        name: item.itemName,
+        stock: item.stock,
+        expiryDate: item.expiryDate,
+      })),
+    [renderItems, selectedId, hoveredId, focusedId]
+  );
+
+  const hoveredData = React.useMemo(() => {
+    if (!hoveredId) return null;
+    return itemRenderData.find((d) => d.id === hoveredId) ?? null;
+  }, [hoveredId, itemRenderData]);
+
+  const sharedMaterial = React.useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
         roughness: 0.3,
-      });
-      map[item.id] = mat;
-    });
-    return map;
-  }, [items]);
+        metalness: 0.05,
+      }),
+    []
+  );
 
-  // Update emissive intensity when selection changes
   React.useEffect(() => {
-    items.forEach((item) => {
-      const mat = materials[item.id];
-      if (mat) {
-        mat.emissiveIntensity = selectedId === item.id ? 0.65 : 0.1;
-      }
-    });
-  }, [selectedId, items, materials]);
+    const mesh = instancedMeshRef.current;
+    if (!mesh || racks.length === 0) return;
 
-  // ── 3. Interaction handlers ─────────────────────────────────────────────
+    mesh.count = itemRenderData.length;
+
+    const tempMatrix = new THREE.Matrix4();
+    const tempPosition = new THREE.Vector3();
+    const tempQuaternion = new THREE.Quaternion();
+    const tempScale = new THREE.Vector3();
+
+    itemRenderData.forEach((item, index) => {
+      const [w, h, d] = item.boxSize;
+      const sf = item.isSelected ? SELECTED_SCALE_BOOST : 1;
+
+      tempPosition.set(...item.position);
+      tempScale.set(w * sf, h * sf, d * sf);
+      tempQuaternion.identity();
+      tempMatrix.compose(tempPosition, tempQuaternion, tempScale);
+      mesh.setMatrixAt(index, tempMatrix);
+
+      let colorValue = item.color;
+      if (item.isSelected) colorValue = "#fef3c7";
+      else if (item.isHovered) colorValue = "#fde68a";
+      else if (item.isFocused) colorValue = "#cbd5e1";
+
+      mesh.setColorAt(index, new THREE.Color(colorValue));
+    });
+
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  }, [itemRenderData, racks]);
+
   const handleItemClick = React.useCallback(
     (e: ThreeEvent<PointerEvent>, id: string) => {
       e.stopPropagation();
       setSelectedId((prev) => (prev === id ? null : id));
     },
-    [setSelectedId],
+    [setSelectedId]
   );
 
-  const handlePointerOver = React.useCallback(
-    (e: ThreeEvent<PointerEvent>, id: string) => {
+  const handlePointerMove = React.useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
-      setHoveredId(id);
+      const instanceId = e.instanceId ?? -1;
+      const nextId =
+        instanceId >= 0 ? itemRenderData[instanceId]?.id ?? null : null;
+      setHoveredId(nextId);
     },
-    [],
+    [itemRenderData]
   );
 
   const handlePointerOut = React.useCallback(
@@ -303,76 +468,277 @@ function WarehouseScene({
       e.stopPropagation();
       setHoveredId(null);
     },
-    [],
+    []
   );
 
-  // Update canvas cursor
   React.useEffect(() => {
     const el = document.querySelector<HTMLDivElement>(".warehouse-canvas");
     if (el) el.style.cursor = hoveredId ? "pointer" : "grab";
   }, [hoveredId]);
 
+  const selectedItem =
+    renderItems.find((item) => item.id === selectedId) ?? null;
+
+  const wireframeSize: [number, number, number] = React.useMemo(() => {
+    if (!selectedItem) return [1, 1, 1];
+    const [w, h, d] = selectedItem.boxSize!;
+    const boost = SELECTED_SCALE_BOOST * 1.06;
+    return [w * boost, h * boost, d * boost];
+  }, [selectedItem]);
+
+  const hoverPosition = React.useMemo(() => {
+    if (!hoveredData) return null;
+    const [x, y, z] = hoveredData.position;
+    const [, h] = hoveredData.boxSize;
+    return new THREE.Vector3(x, y + h * 0.6, z);
+  }, [hoveredData]);
+
   return (
     <>
       <ambientLight intensity={0.7} />
       <directionalLight position={[50, 90, 90]} intensity={1.3} castShadow />
-
-      {/* Warehouse environment (dummy boxes are invisible) */}
       <primitive object={scene} />
 
-      {/* React‑generated item meshes – positioned from rack metadata + slot ids */}
       <group>
-        {items.map((item) => (
-          <mesh
-            key={item.id}
-            position={getSlotPosition(item.rackId, item.slotId)}
-            material={materials[item.id]}
-            onPointerDown={(e) => handleItemClick(e, item.id)}
-            onPointerOver={(e) => handlePointerOver(e, item.id)}
-            onPointerOut={handlePointerOut}
-          >
-            <boxGeometry args={[1.4, 1.4, 1.4]} />
+        {selectedItem && (
+          <mesh position={selectedItem.position} renderOrder={2}>
+            <boxGeometry args={wireframeSize} />
+            <meshBasicMaterial
+              color="#f8fafc"
+              transparent
+              opacity={0.45}
+              wireframe
+            />
           </mesh>
-        ))}
+        )}
+
+        <instancedMesh
+          ref={instancedMeshRef}
+          args={[undefined, undefined, Math.max(itemRenderData.length, 1)]}
+          onPointerMove={handlePointerMove}
+          onPointerOut={handlePointerOut}
+          onPointerDown={(e) => {
+            const instanceId = e.instanceId ?? -1;
+            const itemId =
+              instanceId >= 0
+                ? itemRenderData[instanceId]?.id ?? null
+                : null;
+            if (itemId) {
+              handleItemClick(e, itemId);
+            }
+          }}
+        >
+          <boxGeometry args={[1, 1, 1]} />
+          <primitive object={sharedMaterial} attach="material" />
+        </instancedMesh>
       </group>
 
-      {/* Camera animation controller */}
+      {/* Tooltip hover */}
+      {hoveredData && hoverPosition && (
+        <Html position={hoverPosition} center style={{ pointerEvents: "none" }}>
+          <div className="rounded-lg border border-slate-700 bg-slate-900/95 backdrop-blur-md px-3 py-2 shadow-lg text-slate-100 text-xs leading-tight whitespace-nowrap">
+            <div className="font-semibold text-sm mb-0.5">{hoveredData.name}</div>
+            <div className="flex gap-3 text-[11px]">
+              <span>Stok: <span className="font-medium">{hoveredData.stock}</span></span>
+              <span>ED: <span className="font-medium">{new Date(hoveredData.expiryDate).toLocaleDateString("id-ID")}</span></span>
+            </div>
+          </div>
+        </Html>
+      )}
+
       <CameraController
         selectedId={selectedId}
         controlsRef={controlsRef}
-        items={items}
+        items={renderItems}
+        racks={racks}
+        overviewCamera={overviewCamera}
+        overviewTarget={overviewTarget}
       />
 
       <OrbitControls
         ref={controlsRef}
-        enablePan={true}
+        enablePan={false}
         enableZoom={true}
-        maxDistance={280}
-        minDistance={15}
-        maxPolarAngle={Math.PI / 2 - 0.05}
+        minDistance={25}
+        maxDistance={150}
+        minPolarAngle={0.2}
+        maxPolarAngle={Math.PI / 2.3}
       />
     </>
   );
+}
+
+// ─── Overview camera ────────────────────────────────────────────────────
+
+function buildOverviewCamera(racks: RackLayout[]): {
+  camera: [number, number, number];
+  target: [number, number, number];
+} {
+  if (racks.length === 0) {
+    return {
+      camera: [90, 110, 180],
+      target: [40, 45, 75],
+    };
+  }
+
+  const combined = new THREE.Box3();
+  racks.forEach((rack) => {
+    const halfWidth = rack.width / 2;
+    const halfHeight = rack.height / 2;
+    const halfDepth = rack.depth / 2;
+    combined.expandByPoint(
+      new THREE.Vector3(
+        rack.center[0] - halfWidth,
+        rack.center[1] - halfHeight,
+        rack.center[2] - halfDepth
+      )
+    );
+    combined.expandByPoint(
+      new THREE.Vector3(
+        rack.center[0] + halfWidth,
+        rack.center[1] + halfHeight,
+        rack.center[2] + halfDepth
+      )
+    );
+  });
+
+  const size = combined.getSize(new THREE.Vector3());
+  const center = combined.getCenter(new THREE.Vector3());
+
+  return {
+    camera: [
+      center.x,
+      center.y + size.y * 0.9,
+      center.z + size.z * 1.45,
+    ],
+    target: [center.x, center.y, center.z],
+  };
 }
 
 // ─── Top-level component ────────────────────────────────────────────────────
 
 export function WarehouseView() {
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
-  const [items] = React.useState<ItemData[]>(INITIAL_ITEMS); // will later be replaced by API fetch
+  const [batches, setBatches] = React.useState<ShelfBatchPayload[]>([]);
+  const [items, setItems] = React.useState<WarehouseItem[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [selectedCategory, setSelectedCategory] = React.useState("All");
+  const [focusedId, setFocusedId] = React.useState<string | null>(null);
+  const [racks, setRacks] = React.useState<RackLayout[]>([]);
+  const [overviewCamera, setOverviewCamera] = React.useState<
+    [number, number, number]
+  >([90, 110, 180]);
+  const [overviewTarget, setOverviewTarget] = React.useState<
+    [number, number, number]
+  >([40, 45, 75]);
+
+  React.useEffect(() => {
+    let isActive = true;
+
+    async function loadItems() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const data = await loadWarehouseBatches();
+        if (isActive) {
+          setBatches(data);
+        }
+      } catch (err) {
+        if (isActive) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Gagal memuat data warehouse"
+          );
+          setBatches([]);
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadItems();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const categories = React.useMemo(() => {
+    const uniqueCategories = new Set(items.map((item) => item.category));
+    return ["All", ...Array.from(uniqueCategories).sort()];
+  }, [items]);
+
+  const filteredItems = React.useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    return items.filter((item) => {
+      const matchesCategory =
+        selectedCategory === "All" || item.category === selectedCategory;
+      const matchesQuery =
+        normalizedQuery.length === 0 ||
+        item.itemName.toLowerCase().includes(normalizedQuery);
+      return matchesCategory && matchesQuery;
+    });
+  }, [items, searchQuery, selectedCategory]);
+
+  React.useEffect(() => {
+    if (
+      filteredItems.length > 0 &&
+      (searchQuery.trim().length > 0 || selectedCategory !== "All")
+    ) {
+      setFocusedId(filteredItems[0].id);
+    } else {
+      setFocusedId(null);
+    }
+  }, [filteredItems, searchQuery, selectedCategory]);
 
   const selectedItem = selectedId
-    ? items.find((i) => i.id === selectedId) ?? null
+    ? items.find((item) => item.id === selectedId) ?? null
     : null;
 
   const handleClosePanel = React.useCallback(() => {
     setSelectedId(null);
   }, []);
 
+  const handleResultSelect = React.useCallback((item: WarehouseItem) => {
+    setSelectedId(item.id);
+    setFocusedId(item.id);
+    setSearchQuery(item.itemName);
+  }, []);
+
+  const handleLayoutReady = React.useCallback(
+    (
+      nextRacks: RackLayout[],
+      nextCamera: [number, number, number],
+      nextTarget: [number, number, number]
+    ) => {
+      setRacks(nextRacks);
+      setOverviewCamera(nextCamera);
+      setOverviewTarget(nextTarget);
+    },
+    []
+  );
+
+  const handleItemsReady = React.useCallback((nextItems: WarehouseItem[]) => {
+    setItems(nextItems);
+  }, []);
+
+  React.useEffect(() => {
+    if (racks.length > 0) {
+      setItems(buildWarehouseItems(batches, racks));
+    } else {
+      setItems([]);
+    }
+  }, [batches, racks]);
+
   return (
     <div className="warehouse-canvas relative h-[calc(100vh-4rem)] w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950 shadow-md">
-      {/* 3D viewport */}
-      <Canvas camera={{ position: OVERVIEW_CAMERA, fov: 35 }}>
+      <Canvas camera={{ position: overviewCamera, fov: 40 }}>
         <React.Suspense
           fallback={
             <Html center>
@@ -385,41 +751,125 @@ export function WarehouseView() {
           <WarehouseScene
             selectedId={selectedId}
             setSelectedId={setSelectedId}
-            items={items}
+            batches={batches}
+            focusedId={focusedId}
+            onLayoutReady={handleLayoutReady}
+            onItemsReady={handleItemsReady}
           />
         </React.Suspense>
       </Canvas>
 
-      {/* Fixed overlay panel (right side) */}
+      {isLoading && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm">
+          <div className="rounded-xl border border-slate-800 bg-slate-950/90 px-5 py-4 text-sm text-slate-300 shadow-lg">
+            Memuat data warehouse...
+          </div>
+        </div>
+      )}
+
+      {!isLoading && !error && items.length === 0 && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm">
+          <div className="rounded-xl border border-slate-800 bg-slate-950/90 px-5 py-4 text-sm text-slate-300 shadow-lg">
+            Belum ada data stok yang tersedia.
+          </div>
+        </div>
+      )}
+
+      {error && !isLoading && (
+        <div className="absolute left-6 top-20 z-40 max-w-[320px] rounded-xl border border-red-800/60 bg-red-950/80 px-4 py-3 text-sm text-red-200 shadow-lg backdrop-blur">
+          {error}
+        </div>
+      )}
+
+      {/* ─── Panel kanan atas: Header + Search + Filter + Results ─── */}
+      <div className="absolute right-4 top-4 z-40 w-[300px] rounded-2xl border border-slate-800 bg-slate-950/90 backdrop-blur-lg shadow-2xl flex flex-col max-h-[calc(100%-2rem)]">
+        <div className="shrink-0 border-b border-slate-800 px-5 pt-5 pb-4">
+          <h2 className="text-sm font-semibold tracking-tight text-white mb-1">
+            Live Warehouse 3D
+          </h2>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Visualisasi stok barang yang telah diterima dan divalidasi oleh
+            admin secara real-time.
+          </p>
+        </div>
+
+        <div className="shrink-0 px-5 pt-4 pb-2 space-y-2.5">
+          <input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Cari nama item..."
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-slate-500 transition-colors"
+          />
+          <select
+            value={selectedCategory}
+            onChange={(event) => setSelectedCategory(event.target.value)}
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-slate-500 transition-colors"
+          >
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category === "All" ? "Semua kategori" : category}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="px-5 pb-4 pt-1 min-h-0">
+          {filteredItems.length > 0 ? (
+            <div className="max-h-[140px] space-y-1.5 overflow-y-auto pr-0.5">
+              {filteredItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleResultSelect(item)}
+                  className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                    selectedId === item.id
+                      ? "border-cyan-500 bg-cyan-950/70 text-cyan-100"
+                      : "border-slate-800 bg-slate-900/80 text-slate-200 hover:border-slate-600 hover:bg-slate-800"
+                  }`}
+                >
+                  <div className="font-medium truncate">{item.itemName}</div>
+                  <div className="text-xs text-slate-400">{item.category}</div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-slate-700 bg-slate-900/60 px-3 py-3 text-sm text-slate-400">
+              Tidak ada item yang cocok.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ─── Panel kanan bawah: Detail item terpilih ─── */}
       {selectedItem && (
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 z-40 pointer-events-auto w-[320px] rounded-2xl border border-slate-700 bg-slate-950/90 backdrop-blur-lg p-6 shadow-2xl text-slate-50 animate-in slide-in-from-right-4">
-          <div className="flex items-start justify-between mb-4">
-            <h3 className="font-semibold text-lg flex items-center gap-2">
-              <Package className="w-5 h-5 text-slate-400" />
-              {selectedItem.itemName}
+        <div className="absolute right-4 bottom-4 z-40 w-[300px] rounded-2xl border border-slate-700 bg-slate-950/90 backdrop-blur-lg p-5 shadow-2xl text-slate-50 animate-in slide-in-from-bottom-4">
+          <div className="flex items-start justify-between mb-3">
+            <h3 className="font-semibold text-sm flex items-center gap-2 leading-snug">
+              <Package className="w-4 h-4 shrink-0 text-slate-400" />
+              <span className="line-clamp-2">{selectedItem.itemName}</span>
             </h3>
             <button
               onClick={handleClosePanel}
-              className="rounded-full p-1 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="shrink-0 ml-2 rounded-full p-1 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="space-y-4">
-            <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-              <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">
+          <div className="space-y-2.5">
+            <div className="bg-slate-900 rounded-xl p-3 border border-slate-800">
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">
                 Kategori
               </div>
               <div className="text-sm font-medium">{selectedItem.category}</div>
             </div>
 
-            <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-              <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">
+            <div className="bg-slate-900 rounded-xl p-3 border border-slate-800">
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">
                 Stok Tersedia
               </div>
               <div
-                className={`text-xl font-bold ${
+                className={`text-lg font-bold ${
                   selectedItem.stock < 20 ? "text-red-500" : "text-slate-200"
                 }`}
               >
@@ -427,28 +877,17 @@ export function WarehouseView() {
               </div>
             </div>
 
-            <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-              <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">
+            <div className="bg-slate-900 rounded-xl p-3 border border-slate-800">
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">
                 Deskripsi
               </div>
-              <p className="text-sm text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-300 leading-relaxed line-clamp-3">
                 {selectedItem.description}
               </p>
             </div>
           </div>
         </div>
       )}
-
-      {/* Left top informational badge */}
-      <div className="absolute left-6 top-6 max-w-[280px] rounded-xl border border-slate-800 bg-slate-950/80 backdrop-blur-md p-5 shadow-lg text-slate-50 pointer-events-none select-none">
-        <h2 className="text-sm font-semibold tracking-tight text-white mb-1">
-          Live Warehouse 3D
-        </h2>
-        <p className="text-xs text-slate-400 leading-relaxed">
-          Klik item di rak untuk melihat detail stok.
-          Warna merah menandakan stok kritis.
-        </p>
-      </div>
     </div>
   );
 }
