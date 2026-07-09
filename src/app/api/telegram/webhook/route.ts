@@ -130,12 +130,11 @@ export async function POST(req: NextRequest) {
 	try {
 		const body = await req.json();
 
-		if (!body || !body.message) {
+		const message = body?.message || body?.edited_message;
+
+		if (!message || !message.text) {
 			return NextResponse.json({ ok: true });
 		}
-
-		const message = body.message;
-		if (!message.text) return NextResponse.json({ ok: true });
 
 		const chatId = message.chat.id;
 		const userText = message.text;
