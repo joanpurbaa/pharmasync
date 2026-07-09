@@ -202,15 +202,14 @@ export default function Riwayat() {
 
 										<td className="px-6 py-4">
 											<span
-												className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${
-													log.actionType === "addition"
+												className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${log.actionType === "addition"
 														? "bg-emerald-50 text-emerald-700 border border-emerald-100/50"
 														: log.actionType === "distribution"
 															? "bg-blue-50 text-blue-700 border border-blue-100/50"
 															: log.actionType === "correction"
 																? "bg-amber-50 text-amber-700 border border-amber-100/50"
 																: "bg-red-50 text-red-700 border border-red-100/50"
-												}`}>
+													}`}>
 												{log.action}
 											</span>
 										</td>

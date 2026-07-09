@@ -1,52 +1,19 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
+import {
+	actionLabelMap,
+	actionTypeMap,
+	getInitials,
+	formatDate,
+	formatTime,
+} from "@/lib/stockMovements";
 
-const actionLabelMap: Record<string, string> = {
-	PENAMBAHAN: "Penambahan",
-	DISTRIBUSI: "Distribusi",
-	KOREKSI: "Koreksi",
-	PENGURANGAN: "Pengurangan",
-};
-
-const actionTypeMap: Record<
-	string,
-	"addition" | "distribution" | "correction" | "reduction"
-> = {
-	PENAMBAHAN: "addition",
-	DISTRIBUSI: "distribution",
-	KOREKSI: "correction",
-	PENGURANGAN: "reduction",
-};
-
-function getInitials(name: string) {
-	return name
-		.split(" ")
-		.filter(Boolean)
-		.slice(0, 2)
-		.map((part) => part[0])
-		.join("")
-		.toUpperCase();
-}
-
-function formatDate(date: Date) {
-	return date.toLocaleDateString("id-ID", {
-		day: "2-digit",
-		month: "short",
-		year: "numeric",
-	});
-}
-
-function formatTime(date: Date) {
-	return `${date.toLocaleTimeString("id-ID", {
-		hour: "2-digit",
-		minute: "2-digit",
-		second: "2-digit",
-		hour12: false,
-	})} WIB`;
-}
-
-function buildAuditLogsCacheKey(search: string, page: number, pageSize: number) {
+function buildAuditLogsCacheKey(
+	search: string,
+	page: number,
+	pageSize: number,
+) {
 	return `pharmasync:audit-logs:${encodeURIComponent(search || "all")}:${page}:${pageSize}`;
 }
 

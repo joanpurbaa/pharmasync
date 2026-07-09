@@ -544,7 +544,7 @@ function WarehouseScene({
                 <instancedMesh
                     ref={edgeMeshRef}
                     args={[undefined, undefined, MAX_INSTANCE_CAPACITY]}
-                    raycast={null}>
+                    raycast={undefined}>
                     <boxGeometry args={[1, 1, 1]} />
                     <primitive object={edgeMaterial} attach="material" />
                 </instancedMesh>

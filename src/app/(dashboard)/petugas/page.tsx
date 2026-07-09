@@ -77,28 +77,28 @@ export default function Petugas() {
 
 	const statsData: StatCard[] = summary
 		? [
-				{
-					label: "TOTAL SOPIR",
-					value: String(summary.totalSopir),
-					desc: "Sopir Terdaftar",
-				},
-				{
-					label: "SOPIR AKTIF",
-					value: String(summary.sopirAktif),
-					desc: "Sedang Bertugas",
-				},
-				{
-					label: "TOTAL KENDARAAN",
-					value: String(summary.totalKendaraan),
-					desc: "Unit Kendaraan",
-				},
-				{
-					label: "DALAM PERAWATAN",
-					value: String(summary.dalamPerawatan),
-					desc: "Merespon Tindakan",
-					isWarning: summary.dalamPerawatan > 0,
-				},
-			]
+			{
+				label: "TOTAL SOPIR",
+				value: String(summary.totalSopir),
+				desc: "Sopir Terdaftar",
+			},
+			{
+				label: "SOPIR AKTIF",
+				value: String(summary.sopirAktif),
+				desc: "Sedang Bertugas",
+			},
+			{
+				label: "TOTAL KENDARAAN",
+				value: String(summary.totalKendaraan),
+				desc: "Unit Kendaraan",
+			},
+			{
+				label: "DALAM PERAWATAN",
+				value: String(summary.dalamPerawatan),
+				desc: "Merespon Tindakan",
+				isWarning: summary.dalamPerawatan > 0,
+			},
+		]
 		: [];
 
 	return (
@@ -142,17 +142,15 @@ export default function Petugas() {
 									{stat.label}
 								</span>
 								<div
-									className={`p-2 rounded-lg ${
-										stat.isWarning ? "text-icon-warning" : "text-icon-default"
-									} shrink-0`}>
+									className={`p-2 rounded-lg ${stat.isWarning ? "text-icon-warning" : "text-icon-default"
+										} shrink-0`}>
 									<Icon className="w-4 h-4" />
 								</div>
 							</div>
 							<div className="mt-4">
 								<span
-									className={`text-3xl font-bold tracking-tight ${
-										stat.isWarning ? "text-destructive" : "text-foreground"
-									}`}>
+									className={`text-3xl font-bold tracking-tight ${stat.isWarning ? "text-destructive" : "text-foreground"
+										}`}>
 									{stat.value}
 								</span>
 								<p className="text-xs mt-1 font-medium text-muted-foreground line-clamp-1">
@@ -214,11 +212,10 @@ export default function Petugas() {
 												</td>
 												<td className="px-6 py-4">
 													<span
-														className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${
-															sopir.type === "available"
+														className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${sopir.type === "available"
 																? "bg-emerald-50 text-emerald-700 border border-emerald-100/50"
 																: "bg-blue-50 text-blue-700 border border-blue-100/50"
-														}`}>
+															}`}>
 														{sopir.unit}
 													</span>
 												</td>
@@ -316,7 +313,7 @@ export default function Petugas() {
 										}}
 										className={
 											!sopirPagination ||
-											sopirPagination.page >= sopirPagination.totalPages
+												sopirPagination.page >= sopirPagination.totalPages
 												? "pointer-events-none opacity-50"
 												: ""
 										}
@@ -375,13 +372,12 @@ export default function Petugas() {
 												</td>
 												<td className="px-6 py-4">
 													<span
-														className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${
-															unit.type === "available"
+														className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${unit.type === "available"
 																? "bg-emerald-50 text-emerald-700 border border-emerald-100/50"
 																: unit.type === "maintenance"
 																	? "bg-amber-50 text-amber-700 border border-amber-100/50"
 																	: "bg-blue-50 text-blue-700 border border-blue-100/50"
-														}`}>
+															}`}>
 														{unit.status}
 													</span>
 												</td>
@@ -483,7 +479,7 @@ export default function Petugas() {
 										}}
 										className={
 											!kendaraanPagination ||
-											kendaraanPagination.page >= kendaraanPagination.totalPages
+												kendaraanPagination.page >= kendaraanPagination.totalPages
 												? "pointer-events-none opacity-50"
 												: ""
 										}

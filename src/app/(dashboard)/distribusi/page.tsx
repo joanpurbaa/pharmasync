@@ -523,13 +523,12 @@ export default function Distribusi() {
 							{recentActivity.map((log, idx) => (
 								<div key={idx} className="flex gap-3 items-start text-xs">
 									<div
-										className={`h-2 w-2 rounded-full mt-1.5 shrink-0 ${
-											log.type === "success"
+										className={`h-2 w-2 rounded-full mt-1.5 shrink-0 ${log.type === "success"
 												? "bg-emerald-500"
 												: log.type === "shipping"
 													? "bg-blue-500"
 													: "bg-amber-500"
-										}`}
+											}`}
 									/>
 									<div className="flex-1 space-y-0.5">
 										<div className="flex justify-between gap-2 items-center">

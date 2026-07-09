@@ -139,15 +139,15 @@ export default function AddShipmentModal({
 
 		const response = editData
 			? await fetch(`/api/distribusi/${editData.id}`, {
-					method: "PATCH",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(payload),
-				})
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(payload),
+			})
 			: await fetch("/api/distribusi", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(payload),
-				});
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(payload),
+			});
 
 		const data = await response.json();
 		setIsSubmitting(false);

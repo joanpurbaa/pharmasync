@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
+import {
+	getRecentStockMovementLogs,
+	formatRelativeTime,
+} from "@/lib/stockMovements";
 
 const CACHE_KEY = "pharmasync:dashboard:overview";
 const CACHE_TTL_SECONDS = 30;
@@ -9,44 +13,6 @@ function getStockStatus(current: number, critical: number, min: number) {
 	if (current <= critical) return "KRITIS";
 	if (current <= min) return "MENIPIS";
 	return "AMAN";
-}
-
-function formatRelativeTime(date: Date) {
-	const diffMs = Date.now() - date.getTime();
-	const diffMinutes = Math.floor(diffMs / 60000);
-	if (diffMinutes < 1) return "Baru saja";
-	if (diffMinutes < 60) return `${diffMinutes}m yang lalu`;
-	const diffHours = Math.floor(diffMinutes / 60);
-	if (diffHours < 24) return `${diffHours}j yang lalu`;
-	const diffDays = Math.floor(diffHours / 24);
-	return `${diffDays}h yang lalu`;
-}
-
-const actionTitles: Record<string, string> = {
-	RECEIVE_STOCK: "Barang Masuk",
-	CREATE_ITEM: "Item Baru",
-	CREATE_SHIPMENT: "Pengiriman Dijadwalkan",
-	UPDATE_STOCK: "Update Stok",
-};
-
-function formatActivityDetail(
-	action: string,
-	detail: Record<string, unknown> | null,
-	itemName: string | null,
-) {
-	const d = detail ?? {};
-	switch (action) {
-		case "RECEIVE_STOCK":
-			return `menerima ${d.quantity ?? ""} ${itemName ?? "item"}${
-				d.vendorName ? ` dari ${d.vendorName}` : ""
-			}`;
-		case "CREATE_ITEM":
-			return `mendaftarkan item baru ${itemName ?? ""}`;
-		case "CREATE_SHIPMENT":
-			return `menjadwalkan pengiriman ${itemName ?? "item"}`;
-		default:
-			return action.replaceAll("_", " ").toLowerCase();
-	}
 }
 
 export async function GET() {
@@ -60,7 +26,7 @@ export async function GET() {
 	const endOfToday = new Date();
 	endOfToday.setHours(23, 59, 59, 999);
 
-	const [totalItems, items, shipmentsToday, recentAuditLogs] = await Promise.all(
+	const [totalItems, items, shipmentsToday, recentMovements] = await Promise.all(
 		[
 			db.item.count(),
 			db.item.findMany({
@@ -79,11 +45,7 @@ export async function GET() {
 				where: { scheduledAt: { gte: startOfToday, lte: endOfToday } },
 				select: { status: true },
 			}),
-			db.auditLog.findMany({
-				take: 6,
-				orderBy: { createdAt: "desc" },
-				include: { user: true },
-			}),
+			getRecentStockMovementLogs(6),
 		],
 	);
 
@@ -124,33 +86,18 @@ export async function GET() {
 		(s) => s.status === "DIJADWALKAN" || s.status === "DIKIRIM",
 	).length;
 
-	const itemIds = recentAuditLogs
-		.filter((log) => log.entityType === "Item" && log.entityId)
-		.map((log) => log.entityId as string);
-
-	const relatedItems = itemIds.length
-		? await db.item.findMany({
-				where: { id: { in: itemIds } },
-				select: { id: true, name: true },
-			})
-		: [];
-
-	const itemNameMap = new Map(relatedItems.map((item) => [item.id, item.name]));
-
-	const recentActivities = recentAuditLogs.map((log, idx) => ({
-		title: actionTitles[log.action] ?? log.action,
+	const recentActivities = recentMovements.map((log, idx) => ({
+		title: log.action,
 		time: formatRelativeTime(log.createdAt),
-		user: log.user.name,
-		detail: formatActivityDetail(
-			log.action,
-			log.detail as Record<string, unknown> | null,
-			log.entityId ? (itemNameMap.get(log.entityId) ?? null) : null,
-		),
+		user: log.user,
+		detail: log.targetDetail
+			? `${log.targetItem} · ${log.targetDetail} (${log.change})`
+			: `${log.targetItem} (${log.change})`,
 		isLatest: idx === 0,
 	}));
 
-	const lastActivity = recentAuditLogs[0]
-		? formatRelativeTime(recentAuditLogs[0].createdAt)
+	const lastActivity = recentMovements[0]
+		? formatRelativeTime(recentMovements[0].createdAt)
 		: "-";
 
 	const response = {

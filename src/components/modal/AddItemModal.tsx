@@ -46,7 +46,7 @@ export default function AddItemModal({
       setFormData({
         name: editData.name,
         sku: editData.sku,
-        categoryName: editData.category, 
+        categoryName: editData.category,
         unit: editData.unit,
         description: editData.description ?? "",
         minThreshold: String(editData.minThreshold ?? ""),

@@ -39,12 +39,14 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  
- 
+
   --color-icon-default: var(--icon-default);
   --color-icon-warning: var(--icon-warning);
   --color-btn-custom: var(--btn-custom);
   --color-btn-custom-foreground: var(--btn-custom-foreground);
+
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -63,18 +65,20 @@
   --card-foreground: oklch(0.18 0.035 160);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.035 160);
-  
 
-  --primary: oklch(0.65 0.15 145);               
-  --primary-foreground: oklch(0.99 0 0);          
-  --secondary: oklch(0.78 0.14 195);             
-  --secondary-foreground: oklch(0.20 0.08 195);    
-  
 
-  --icon-default: oklch(0.15 0 0);                
-  --icon-warning: oklch(0.60 0.22 25);           
-  --btn-custom: oklch(0.40 0.18 245);             
-  --btn-custom-foreground: oklch(0.99 0 0);       
+  --primary: oklch(0.65 0.15 145);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.78 0.14 195);
+  --secondary-foreground: oklch(0.20 0.08 195);
+
+  --highlight: oklch(0.954 0.16 109);
+  --highlight-foreground: oklch(0.28 0.09 100);
+
+  --icon-default: oklch(0.15 0 0);
+  --icon-warning: oklch(0.60 0.22 25);
+  --btn-custom: oklch(0.40 0.18 245);
+  --btn-custom-foreground: oklch(0.99 0 0);
 
   --muted: oklch(0.95 0.015 165);
   --muted-foreground: oklch(0.50 0.03 162);
@@ -111,7 +115,9 @@
   --primary-foreground: oklch(0.15 0.03 162);
   --secondary: oklch(0.82 0.11 195);
   --secondary-foreground: oklch(0.15 0.03 162);
-  --icon-default: oklch(0.95 0 0); 
+  --highlight: oklch(0.85 0.15 105);
+  --highlight-foreground: oklch(0.20 0.05 100);
+  --icon-default: oklch(0.95 0 0);
   --icon-warning: oklch(0.70 0.19 25);
   --btn-custom: oklch(0.55 0.15 245);
   --btn-custom-foreground: oklch(0.99 0 0);
@@ -138,9 +144,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }

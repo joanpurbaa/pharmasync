@@ -25,37 +25,37 @@ export default function Dashboard() {
 
     const statsData = data
         ? [
-                {
-                    title: "Total Item Obat",
-                    value: data.totalItems.toLocaleString("id-ID"),
-                    change: "Total SKU terdaftar",
-                    icon: PackageIcon,
-                    iconColor: "text-icon-default",
-                },
-                {
-                    title: "Stok Kritis",
-                    value: String(data.criticalStockCount),
-                    change: "Memerlukan tindakan segera",
-                    icon: AlertTriangleIcon,
-                    iconColor: "text-icon-warning",
-                },
-                {
-                    title: "Pengiriman Hari Ini",
-                    value: String(data.shipmentsToday.total),
-                    change: `${data.shipmentsToday.completed} Selesai, ${data.shipmentsToday.inProgress} Dalam Proses`,
-                    icon: TruckIcon,
-                    iconColor: "text-icon-default",
-                },
-                {
-                    title: "Aktivitas Terakhir",
-                    value: data.lastActivity,
-                    change: data.recentActivities[0]
-                        ? `${data.recentActivities[0].user} ${data.recentActivities[0].detail}`
-                        : "Belum ada aktivitas",
-                    icon: HistoryIcon,
-                    iconColor: "text-secondary",
-                },
-            ]
+            {
+                title: "Total Item Obat",
+                value: data.totalItems.toLocaleString("id-ID"),
+                change: "Total SKU terdaftar",
+                icon: PackageIcon,
+                iconColor: "text-icon-default",
+            },
+            {
+                title: "Stok Kritis",
+                value: String(data.criticalStockCount),
+                change: "Memerlukan tindakan segera",
+                icon: AlertTriangleIcon,
+                iconColor: "text-icon-warning",
+            },
+            {
+                title: "Pengiriman Hari Ini",
+                value: String(data.shipmentsToday.total),
+                change: `${data.shipmentsToday.completed} Selesai, ${data.shipmentsToday.inProgress} Dalam Proses`,
+                icon: TruckIcon,
+                iconColor: "text-icon-default",
+            },
+            {
+                title: "Aktivitas Terakhir",
+                value: data.lastActivity,
+                change: data.recentActivities[0]
+                    ? `${data.recentActivities[0].user} ${data.recentActivities[0].detail}`
+                    : "Belum ada aktivitas",
+                icon: HistoryIcon,
+                iconColor: "text-secondary",
+            },
+        ]
         : [];
 
     return (
@@ -167,18 +167,16 @@ export default function Dashboard() {
                                                     {item.sku}
                                                 </td>
                                                 <td
-                                                    className={`px-6 py-4 font-semibold ${
-                                                        item.type === "kritis" ? "text-red-600" : "text-amber-600"
-                                                    }`}>
+                                                    className={`px-6 py-4 font-semibold ${item.type === "kritis" ? "text-red-600" : "text-amber-600"
+                                                        }`}>
                                                     {item.stock}
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
                                                     <span
-                                                        className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
-                                                            item.type === "kritis"
-                                                                ? "bg-red-50 text-red-700 border border-red-100"
-                                                                : "bg-amber-50 text-amber-700 border border-amber-100"
-                                                        }`}>
+                                                        className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${item.type === "kritis"
+                                                            ? "bg-red-50 text-red-700 border border-red-100"
+                                                            : "bg-amber-50 text-amber-700 border border-amber-100"
+                                                            }`}>
                                                         {item.status}
                                                     </span>
                                                 </td>

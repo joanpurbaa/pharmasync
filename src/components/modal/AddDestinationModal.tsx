@@ -72,15 +72,15 @@ export default function AddDestinationModal({
 
 		const response = editData
 			? await fetch(`/api/destinations/${editData.id}`, {
-					method: "PATCH",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(payload),
-				})
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(payload),
+			})
 			: await fetch("/api/destinations", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(payload),
-				});
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(payload),
+			});
 
 		const data = await response.json();
 		setIsSubmitting(false);
