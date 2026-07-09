@@ -26,24 +26,6 @@ import {
   Box,
 } from "lucide-react";
 
-const teams = [
-  {
-    name: "Pharmasync",
-    logo: <GalleryVerticalEndIcon />,
-    plan: "Supply chain",
-  },
-  {
-    name: "Pharmasync",
-    logo: <AudioLinesIcon />,
-    plan: "Startup",
-  },
-  {
-    name: "Evil Corp.",
-    logo: <TerminalIcon />,
-    plan: "Free",
-  },
-];
-
 const projects = [
 	{
 		name: "Dashboard",
@@ -124,10 +106,6 @@ export function AppSidebar({
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={teams} />
-      </SidebarHeader>
-
       <SidebarContent>
         <NavProjects projects={projects} />
       </SidebarContent>
