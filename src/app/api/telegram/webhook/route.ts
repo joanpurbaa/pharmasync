@@ -166,6 +166,34 @@ async function sendTelegramMessage(chatId: number, text: string) {
 	}
 }
 
+function wait(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function createCompletion(messages: ChatMessage[]) {
+	return ai.chat.completions.create({
+		model: MODEL,
+		messages,
+		tools,
+		tool_choice: "auto",
+		temperature: 0.2,
+		max_tokens: 4096,
+		seed: 42,
+	});
+}
+
+async function createCompletionWithRetry(messages: ChatMessage[]) {
+	try {
+		return await createCompletion(messages);
+	} catch (err: any) {
+		if (err?.status === 429) {
+			await wait(2000);
+			return await createCompletion(messages);
+		}
+		throw err;
+	}
+}
+
 export async function POST(req: NextRequest) {
 	let chatId: number | null = null;
 
@@ -211,17 +239,19 @@ export async function POST(req: NextRequest) {
 		];
 
 		let finalText = "";
+		let rateLimited = false;
 
 		for (let i = 0; i < 5; i++) {
-			const completion = await ai.chat.completions.create({
-				model: MODEL,
-				messages,
-				tools,
-				tool_choice: "auto",
-				temperature: 0.2,
-				max_tokens: 4096,
-				seed: 42,
-			});
+			let completion;
+			try {
+				completion = await createCompletionWithRetry(messages);
+			} catch (err: any) {
+				if (err?.status === 429) {
+					rateLimited = true;
+					break;
+				}
+				throw err;
+			}
 
 			const choice = completion.choices[0];
 			const msg = choice.message;
@@ -246,6 +276,14 @@ export async function POST(req: NextRequest) {
 					});
 				}
 			}
+		}
+
+		if (rateLimited) {
+			await sendTelegramMessage(
+				chatId!,
+				"⏳ AI-nya lagi kebanyakan request saat ini (rate limit). Coba kirim pesan kamu lagi dalam 15-30 detik ya.",
+			);
+			return NextResponse.json({ ok: true });
 		}
 
 		await saveHistory(chatId!, messages.slice(1));
