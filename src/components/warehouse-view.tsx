@@ -788,9 +788,9 @@ export function WarehouseView() {
                 className="absolute left-4 bottom-4 z-40 flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/90 text-slate-200 backdrop-blur hover:bg-slate-800 transition-colors"
                 title={isFullscreen ? "Keluar layar penuh" : "Layar penuh"}>
                 {isFullscreen ? (
-                    <Minimize className="h-4 w-4" />
+                    <Minimize className="h-4 w-4 text-white" />
                 ) : (
-                    <Maximize className="h-4 w-4" />
+                    <Maximize className="h-4 w-4 text-white" />
                 )}
             </button>
 
