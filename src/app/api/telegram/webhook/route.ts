@@ -43,7 +43,7 @@ async function clearHistory(chatId: number) {
 const SYSTEM_PROMPT =
 	"Kamu adalah asisten AI terintegrasi untuk kontrol dashboard manajemen farmasi Pharmasync. Tugasmu membantu user mengecek stok barang, melihat daftar mitra, dan mengatur pengiriman (shipment) via database. Apabila user ingin membuat pengiriman, kamu WAJIB mencari itemId dan destinationId terlebih dahulu via tools yang tersedia jika belum ada di konteks. SELALU konfirmasi ulang detail item dan jumlah secara eksplisit kepada user sebelum mengeksekusi tool 'create_shipment'. Gunakan riwayat percakapan sebelumnya sebagai konteks apabila relevan, misalnya saat user membalas 'lanjutkan' atau 'ya' terhadap konfirmasi yang kamu berikan sebelumnya. Jawablah dalam Bahasa Indonesia yang singkat, profesional, dan informatif.";
 
-const openaiTools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
+const openaiTools = [
 	{
 		type: "function",
 		function: {
@@ -98,7 +98,7 @@ const openaiTools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
 			},
 		},
 	},
-];
+] satisfies OpenAI.Chat.Completions.ChatCompletionTool[];
 
 const geminiTools = openaiTools.map((t) => ({
 	type: "function" as const,
