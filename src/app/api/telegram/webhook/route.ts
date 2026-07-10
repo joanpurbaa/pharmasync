@@ -80,7 +80,23 @@ async function callInternalApi(path: string, init?: RequestInit) {
 				...(init?.headers ?? {}),
 			},
 		});
-		return res.json();
+
+		const text = await res.text();
+
+		if (!res.ok) {
+			console.error(
+				`callInternalApi ${path} gagal (${res.status}):`,
+				text.slice(0, 200),
+			);
+			return { error: `Internal API ${path} mengembalikan status ${res.status}` };
+		}
+
+		try {
+			return JSON.parse(text);
+		} catch {
+			console.error(`callInternalApi ${path} bukan JSON:`, text.slice(0, 200));
+			return { error: `Respons dari ${path} bukan format JSON yang valid` };
+		}
 	} catch (err) {
 		console.error("Gagal callInternalApi:", err);
 		return { error: "Failed to fetch internal API data" };
@@ -98,10 +114,10 @@ async function executeTool(name: string, args: any) {
 		case "get_mitra_list": {
 			const params = new URLSearchParams();
 			if (args.search) params.set("search", args.search);
-			return callInternalApi(`/api/mitra?${params.toString()}`);
+			return callInternalApi(`/api/destinations?${params.toString()}`);
 		}
 		case "create_shipment": {
-			return callInternalApi(`/api/shipments`, {
+			return callInternalApi(`/api/distribusi`, {
 				method: "POST",
 				body: JSON.stringify(args),
 			});
@@ -127,6 +143,8 @@ async function sendTelegramMessage(chatId: number, text: string) {
 }
 
 export async function POST(req: NextRequest) {
+	let chatId: number | null = null;
+
 	try {
 		const body = await req.json();
 
@@ -136,12 +154,12 @@ export async function POST(req: NextRequest) {
 			return NextResponse.json({ ok: true });
 		}
 
-		const chatId = message.chat.id;
+		chatId = message.chat.id;
 		const userText = message.text;
 
 		if (!ALLOWED_CHAT_IDS.includes(String(chatId))) {
 			await sendTelegramMessage(
-				chatId,
+				chatId!,
 				"⚠️ Maaf, kamu tidak punya akses untuk mengontrol dashboard Pharmasync.",
 			);
 			return NextResponse.json({ ok: true });
@@ -194,12 +212,18 @@ export async function POST(req: NextRequest) {
 		}
 
 		await sendTelegramMessage(
-			chatId,
+			chatId!,
 			finalText ||
 				"🤖 Maaf, terjadi kendala saat memproses instruksi ke database dashboard.",
 		);
 	} catch (error) {
 		console.error("Error global on Telegram Webhook Route:", error);
+		if (chatId) {
+			await sendTelegramMessage(
+				chatId,
+				"🤖 Maaf, terjadi kesalahan teknis saat memproses permintaan kamu. Coba lagi dalam beberapa saat.",
+			);
+		}
 	}
 
 	return NextResponse.json({ ok: true });
