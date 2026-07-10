@@ -1,22 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import Cerebras from "@cerebras/cerebras_cloud_sdk";
 import { redis } from "@/lib/redis";
 
-const ai = new OpenAI({
-	baseURL: "https://integrate.api.nvidia.com/v1",
-	apiKey: process.env.NVIDIA_API_KEY,
+const ai = new Cerebras({
+	apiKey: process.env.CEREBRAS_API_KEY,
 });
 
-const MODEL = "z-ai/glm-5.2";
+const MODEL = "zai-glm-4.7";
 
 const ALLOWED_CHAT_IDS = (process.env.TELEGRAM_ALLOWED_IDS ?? "")
 	.split(",")
 	.map((id) => id.trim());
 
 const HISTORY_TTL_SECONDS = 60 * 30;
-const MAX_HISTORY_MESSAGES = 20;
+const MAX_HISTORY_MESSAGES = 6;
 
-type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
+
+type ChatMessage = {
+	role: "system" | "user" | "assistant" | "tool";
+	content: string | null;
+	tool_calls?: Array<{
+		id: string;
+		type: "function";
+		function: { name: string; arguments: string };
+	}>;
+	tool_call_id?: string;
+};
 
 function historyKey(chatId: number) {
 	return `pharmasync:telegram:history:${chatId}`;
@@ -36,7 +45,16 @@ async function clearHistory(chatId: number) {
 	await redis.del(historyKey(chatId));
 }
 
-const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
+type ToolDefinition = {
+	type: "function";
+	function: {
+		name: string;
+		description: string;
+		parameters: Record<string, unknown>;
+	};
+};
+
+const tools: ToolDefinition[] = [
 	{
 		type: "function",
 		function: {
@@ -171,15 +189,15 @@ function wait(ms: number) {
 }
 
 async function createCompletion(messages: ChatMessage[]) {
-	return ai.chat.completions.create({
+	const response = await ai.chat.completions.create({
 		model: MODEL,
 		messages,
 		tools,
 		tool_choice: "auto",
 		temperature: 0.2,
-		max_tokens: 4096,
-		seed: 42,
-	});
+		max_tokens: 1024,
+	} as any);
+	return response as any;
 }
 
 async function createCompletionWithRetry(messages: ChatMessage[]) {
