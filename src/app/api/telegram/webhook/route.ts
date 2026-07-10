@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { redis } from "@/lib/redis";
 
 const ai = new OpenAI({
 	baseURL: "https://integrate.api.nvidia.com/v1",
@@ -11,6 +12,29 @@ const MODEL = "z-ai/glm-5.2";
 const ALLOWED_CHAT_IDS = (process.env.TELEGRAM_ALLOWED_IDS ?? "")
 	.split(",")
 	.map((id) => id.trim());
+
+const HISTORY_TTL_SECONDS = 60 * 30;
+const MAX_HISTORY_MESSAGES = 20;
+
+type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
+
+function historyKey(chatId: number) {
+	return `pharmasync:telegram:history:${chatId}`;
+}
+
+async function loadHistory(chatId: number): Promise<ChatMessage[]> {
+	const stored = await redis.get<ChatMessage[]>(historyKey(chatId));
+	return stored ?? [];
+}
+
+async function saveHistory(chatId: number, history: ChatMessage[]) {
+	const trimmed = history.slice(-MAX_HISTORY_MESSAGES);
+	await redis.set(historyKey(chatId), trimmed, { ex: HISTORY_TTL_SECONDS });
+}
+
+async function clearHistory(chatId: number) {
+	await redis.del(historyKey(chatId));
+}
 
 const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
 	{
@@ -155,7 +179,7 @@ export async function POST(req: NextRequest) {
 		}
 
 		chatId = message.chat.id;
-		const userText = message.text;
+		const userText = message.text as string;
 
 		if (!ALLOWED_CHAT_IDS.includes(String(chatId))) {
 			await sendTelegramMessage(
@@ -165,12 +189,24 @@ export async function POST(req: NextRequest) {
 			return NextResponse.json({ ok: true });
 		}
 
-		const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+		if (userText.trim() === "/reset" || userText.trim() === "/start") {
+			await clearHistory(chatId!);
+			await sendTelegramMessage(
+				chatId!,
+				"🔄 Percakapan sudah direset. Ada yang bisa saya bantu terkait stok, mitra, atau pengiriman?",
+			);
+			return NextResponse.json({ ok: true });
+		}
+
+		const previousHistory = await loadHistory(chatId!);
+
+		const messages: ChatMessage[] = [
 			{
 				role: "system",
 				content:
-					"Kamu adalah asisten AI terintegrasi untuk kontrol dashboard manajemen farmasi Pharmasync. Tugasmu membantu user mengecek stok barang, melihat daftar mitra, dan mengatur pengiriman (shipment) via database. Apabila user ingin membuat pengiriman, kamu WAJIB mencari itemId dan destinationId terlebih dahulu via tools yang tersedia jika belum ada di konteks. SELALU konfirmasi ulang detail item dan jumlah secara eksplisit kepada user sebelum mengeksekusi tool 'create_shipment'. Jawablah dalam Bahasa Indonesia yang singkat, profesional, dan informatif.",
+					"Kamu adalah asisten AI terintegrasi untuk kontrol dashboard manajemen farmasi Pharmasync. Tugasmu membantu user mengecek stok barang, melihat daftar mitra, dan mengatur pengiriman (shipment) via database. Apabila user ingin membuat pengiriman, kamu WAJIB mencari itemId dan destinationId terlebih dahulu via tools yang tersedia jika belum ada di konteks. SELALU konfirmasi ulang detail item dan jumlah secara eksplisit kepada user sebelum mengeksekusi tool 'create_shipment'. Gunakan riwayat percakapan sebelumnya sebagai konteks apabila relevan, misalnya saat user membalas 'lanjutkan' atau 'ya' terhadap konfirmasi yang kamu berikan sebelumnya. Jawablah dalam Bahasa Indonesia yang singkat, profesional, dan informatif.",
 			},
+			...previousHistory,
 			{ role: "user", content: userText },
 		];
 
@@ -192,6 +228,7 @@ export async function POST(req: NextRequest) {
 
 			if (!msg.tool_calls || msg.tool_calls.length === 0) {
 				finalText = msg.content ?? "";
+				messages.push(msg);
 				break;
 			}
 
@@ -210,6 +247,8 @@ export async function POST(req: NextRequest) {
 				}
 			}
 		}
+
+		await saveHistory(chatId!, messages.slice(1));
 
 		await sendTelegramMessage(
 			chatId!,
