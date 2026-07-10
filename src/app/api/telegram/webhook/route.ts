@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import Cerebras from "@cerebras/cerebras_cloud_sdk";
+import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import { redis } from "@/lib/redis";
 
-const ai = new Cerebras({
-	apiKey: process.env.CEREBRAS_API_KEY,
+const nvidia = new OpenAI({
+	baseURL: "https://integrate.api.nvidia.com/v1",
+	apiKey: process.env.NVIDIA_API_KEY,
 });
+const NVIDIA_MODEL = "z-ai/glm-5.2";
 
-const MODEL = "gpt-oss-120b";
+const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const GEMINI_MODEL = "gemini-3.5-flash";
 
 const ALLOWED_CHAT_IDS = (process.env.TELEGRAM_ALLOWED_IDS ?? "")
 	.split(",")
@@ -14,29 +18,20 @@ const ALLOWED_CHAT_IDS = (process.env.TELEGRAM_ALLOWED_IDS ?? "")
 
 const HISTORY_TTL_SECONDS = 60 * 30;
 
-const MAX_HISTORY_MESSAGES = 6;
+const MAX_HISTORY_MESSAGES = 12;
 
-type ChatMessage = {
-	role: "system" | "user" | "assistant" | "tool";
-	content: string | null;
-	tool_calls?: Array<{
-		id: string;
-		type: "function";
-		function: { name: string; arguments: string };
-	}>;
-	tool_call_id?: string;
-};
+type SimpleMessage = { role: "user" | "assistant"; content: string };
 
 function historyKey(chatId: number) {
 	return `pharmasync:telegram:history:${chatId}`;
 }
 
-async function loadHistory(chatId: number): Promise<ChatMessage[]> {
-	const stored = await redis.get<ChatMessage[]>(historyKey(chatId));
+async function loadHistory(chatId: number): Promise<SimpleMessage[]> {
+	const stored = await redis.get<SimpleMessage[]>(historyKey(chatId));
 	return stored ?? [];
 }
 
-async function saveHistory(chatId: number, history: ChatMessage[]) {
+async function saveHistory(chatId: number, history: SimpleMessage[]) {
 	const trimmed = history.slice(-MAX_HISTORY_MESSAGES);
 	await redis.set(historyKey(chatId), trimmed, { ex: HISTORY_TTL_SECONDS });
 }
@@ -45,16 +40,10 @@ async function clearHistory(chatId: number) {
 	await redis.del(historyKey(chatId));
 }
 
-type ToolDefinition = {
-	type: "function";
-	function: {
-		name: string;
-		description: string;
-		parameters: Record<string, unknown>;
-	};
-};
+const SYSTEM_PROMPT =
+	"Kamu adalah asisten AI terintegrasi untuk kontrol dashboard manajemen farmasi Pharmasync. Tugasmu membantu user mengecek stok barang, melihat daftar mitra, dan mengatur pengiriman (shipment) via database. Apabila user ingin membuat pengiriman, kamu WAJIB mencari itemId dan destinationId terlebih dahulu via tools yang tersedia jika belum ada di konteks. SELALU konfirmasi ulang detail item dan jumlah secara eksplisit kepada user sebelum mengeksekusi tool 'create_shipment'. Gunakan riwayat percakapan sebelumnya sebagai konteks apabila relevan, misalnya saat user membalas 'lanjutkan' atau 'ya' terhadap konfirmasi yang kamu berikan sebelumnya. Jawablah dalam Bahasa Indonesia yang singkat, profesional, dan informatif.";
 
-const tools: ToolDefinition[] = [
+const openaiTools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
 	{
 		type: "function",
 		function: {
@@ -110,6 +99,13 @@ const tools: ToolDefinition[] = [
 		},
 	},
 ];
+
+const geminiTools = openaiTools.map((t) => ({
+	type: "function" as const,
+	name: t.function.name,
+	description: t.function.description,
+	parameters: t.function.parameters,
+}));
 
 async function callInternalApi(path: string, init?: RequestInit) {
 	const base = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:3000";
@@ -184,33 +180,136 @@ async function sendTelegramMessage(chatId: number, text: string) {
 	}
 }
 
-function wait(ms: number) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
+async function runWithNvidia(
+	history: SimpleMessage[],
+	userText: string,
+): Promise<string> {
+	const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+		{ role: "system", content: SYSTEM_PROMPT },
+		...history.map(
+			(h) =>
+				({
+					role: h.role,
+					content: h.content,
+				}) as OpenAI.Chat.Completions.ChatCompletionMessageParam,
+		),
+		{ role: "user", content: userText },
+	];
 
-async function createCompletion(messages: ChatMessage[]) {
-	const response = await ai.chat.completions.create({
-		model: MODEL,
-		messages,
-		tools,
-		tool_choice: "auto",
-		temperature: 0.2,
+	let finalText = "";
 
-		max_tokens: 1024,
-	} as any);
-	return response as any;
-}
+	for (let i = 0; i < 5; i++) {
+		const completion = await nvidia.chat.completions.create({
+			model: NVIDIA_MODEL,
+			messages,
+			tools: openaiTools,
+			tool_choice: "auto",
+			temperature: 0.2,
+			max_tokens: 2048,
+		});
 
-async function createCompletionWithRetry(messages: ChatMessage[]) {
-	try {
-		return await createCompletion(messages);
-	} catch (err: any) {
-		if (err?.status === 429) {
-			await wait(2000);
-			return await createCompletion(messages);
+		const msg = completion.choices[0].message;
+
+		if (!msg.tool_calls || msg.tool_calls.length === 0) {
+			finalText = msg.content ?? "";
+			break;
 		}
-		throw err;
+
+		messages.push(msg);
+
+		for (const call of msg.tool_calls) {
+			if (call.type === "function") {
+				const args = JSON.parse(call.function.arguments || "{}");
+				const result = await executeTool(call.function.name, args);
+				messages.push({
+					role: "tool",
+					tool_call_id: call.id,
+					content: JSON.stringify(result),
+				});
+			}
+		}
 	}
+
+	return (
+		finalText ||
+		"🤖 Maaf, terjadi kendala saat memproses instruksi ke database dashboard."
+	);
+}
+
+async function runWithGemini(
+	history: SimpleMessage[],
+	userText: string,
+): Promise<string> {
+	const historyText = history
+		.map((h) => `${h.role === "user" ? "User" : "Asisten"}: ${h.content}`)
+		.join("\n");
+
+	const composedInput = `${SYSTEM_PROMPT}\n\n${
+		historyText ? `Riwayat percakapan sebelumnya:\n${historyText}\n\n` : ""
+	}Pesan baru dari user: ${userText}`;
+
+	let interaction = await gemini.interactions.create({
+		model: GEMINI_MODEL,
+		input: composedInput,
+		tools: geminiTools,
+	});
+
+	for (let i = 0; i < 5; i++) {
+		const callSteps = interaction.steps.filter(
+			(s: any) => s.type === "function_call",
+		);
+
+		if (callSteps.length === 0) break;
+
+		const results = [];
+		for (const step of callSteps as any[]) {
+			const result = await executeTool(step.name, step.arguments);
+			results.push({
+				type: "function_result",
+				name: step.name,
+				call_id: step.id,
+				result: [{ type: "text", text: JSON.stringify(result) }],
+			});
+		}
+
+		interaction = await gemini.interactions.create({
+			model: GEMINI_MODEL,
+			input: results as any,
+			tools: geminiTools,
+			previous_interaction_id: interaction.id,
+		});
+	}
+
+	return (
+		interaction.output_text ||
+		"🤖 Maaf, terjadi kendala saat memproses instruksi ke database dashboard."
+	);
+}
+
+async function generateReply(
+	history: SimpleMessage[],
+	userText: string,
+): Promise<string> {
+	const providers: Array<{ name: string; run: () => Promise<string> }> = [
+		{ name: "nvidia", run: () => runWithNvidia(history, userText) },
+		{ name: "gemini", run: () => runWithGemini(history, userText) },
+	];
+
+	let lastError: any = null;
+
+	for (const provider of providers) {
+		try {
+			return await provider.run();
+		} catch (err: any) {
+			lastError = err;
+			console.error(
+				`Provider "${provider.name}" gagal (status ${err?.status ?? "?"}):`,
+				err?.message ?? err,
+			);
+		}
+	}
+
+	throw lastError ?? new Error("Semua provider AI gagal tanpa detail error.");
 }
 
 export async function POST(req: NextRequest) {
@@ -247,87 +346,30 @@ export async function POST(req: NextRequest) {
 
 		const previousHistory = await loadHistory(chatId!);
 
-		const messages: ChatMessage[] = [
-			{
-				role: "system",
-				content:
-					"Kamu adalah asisten AI terintegrasi untuk kontrol dashboard manajemen farmasi Pharmasync. Tugasmu membantu user mengecek stok barang, melihat daftar mitra, dan mengatur pengiriman (shipment) via database. Apabila user ingin membuat pengiriman, kamu WAJIB mencari itemId dan destinationId terlebih dahulu via tools yang tersedia jika belum ada di konteks. SELALU konfirmasi ulang detail item dan jumlah secara eksplisit kepada user sebelum mengeksekusi tool 'create_shipment'. Gunakan riwayat percakapan sebelumnya sebagai konteks apabila relevan, misalnya saat user membalas 'lanjutkan' atau 'ya' terhadap konfirmasi yang kamu berikan sebelumnya. Jawablah dalam Bahasa Indonesia yang singkat, profesional, dan informatif.",
-			},
+		let finalText = "";
+		let bothFailed = false;
+
+		try {
+			finalText = await generateReply(previousHistory, userText);
+		} catch {
+			bothFailed = true;
+		}
+
+		if (bothFailed) {
+			await sendTelegramMessage(
+				chatId!,
+				"⏳ Dua-duanya (NVIDIA & Gemini) lagi bermasalah — kemungkinan kuota habis atau rate limit. Coba kirim pesan kamu lagi dalam 15-30 detik ya.",
+			);
+			return NextResponse.json({ ok: true });
+		}
+
+		await saveHistory(chatId!, [
 			...previousHistory,
 			{ role: "user", content: userText },
-		];
+			{ role: "assistant", content: finalText },
+		]);
 
-		let finalText = "";
-		let rateLimited = false;
-		let paymentRequired = false;
-
-		for (let i = 0; i < 5; i++) {
-			let completion;
-			try {
-				completion = await createCompletionWithRetry(messages);
-			} catch (err: any) {
-				if (err?.status === 429) {
-					rateLimited = true;
-					break;
-				}
-				if (err?.status === 402) {
-					paymentRequired = true;
-					break;
-				}
-				throw err;
-			}
-
-			const choice = completion.choices[0];
-			const msg = choice.message;
-
-			if (!msg.tool_calls || msg.tool_calls.length === 0) {
-				finalText = msg.content ?? "";
-				messages.push(msg);
-				break;
-			}
-
-			messages.push(msg);
-
-			for (const call of msg.tool_calls) {
-				if (call.type === "function") {
-					const args = JSON.parse(call.function.arguments || "{}");
-					const result = await executeTool(call.function.name, args);
-
-					messages.push({
-						role: "tool",
-						tool_call_id: call.id,
-						content: JSON.stringify(result),
-					});
-				}
-			}
-		}
-
-		if (rateLimited) {
-			await sendTelegramMessage(
-				chatId!,
-				"⏳ AI-nya lagi kebanyakan request saat ini (rate limit). Coba kirim pesan kamu lagi dalam 15-30 detik ya.",
-			);
-			return NextResponse.json({ ok: true });
-		}
-
-		if (paymentRequired) {
-			console.error(
-				"Cerebras 402 payment_required — cek billing/quota tab di cloud.cerebras.ai",
-			);
-			await sendTelegramMessage(
-				chatId!,
-				"🚫 Kuota AI gratis sedang bermasalah di sisi provider (butuh billing). Admin perlu cek dashboard Cerebras dulu ya.",
-			);
-			return NextResponse.json({ ok: true });
-		}
-
-		await saveHistory(chatId!, messages.slice(1));
-
-		await sendTelegramMessage(
-			chatId!,
-			finalText ||
-				"🤖 Maaf, terjadi kendala saat memproses instruksi ke database dashboard.",
-		);
+		await sendTelegramMessage(chatId!, finalText);
 	} catch (error) {
 		console.error("Error global on Telegram Webhook Route:", error);
 		if (chatId) {
