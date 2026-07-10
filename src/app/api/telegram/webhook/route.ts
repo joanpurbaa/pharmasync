@@ -6,15 +6,15 @@ const ai = new Cerebras({
 	apiKey: process.env.CEREBRAS_API_KEY,
 });
 
-const MODEL = "zai-glm-4.7";
+const MODEL = "gpt-oss-120b";
 
 const ALLOWED_CHAT_IDS = (process.env.TELEGRAM_ALLOWED_IDS ?? "")
 	.split(",")
 	.map((id) => id.trim());
 
 const HISTORY_TTL_SECONDS = 60 * 30;
-const MAX_HISTORY_MESSAGES = 6;
 
+const MAX_HISTORY_MESSAGES = 6;
 
 type ChatMessage = {
 	role: "system" | "user" | "assistant" | "tool";
@@ -195,6 +195,7 @@ async function createCompletion(messages: ChatMessage[]) {
 		tools,
 		tool_choice: "auto",
 		temperature: 0.2,
+
 		max_tokens: 1024,
 	} as any);
 	return response as any;
@@ -258,6 +259,7 @@ export async function POST(req: NextRequest) {
 
 		let finalText = "";
 		let rateLimited = false;
+		let paymentRequired = false;
 
 		for (let i = 0; i < 5; i++) {
 			let completion;
@@ -266,6 +268,10 @@ export async function POST(req: NextRequest) {
 			} catch (err: any) {
 				if (err?.status === 429) {
 					rateLimited = true;
+					break;
+				}
+				if (err?.status === 402) {
+					paymentRequired = true;
 					break;
 				}
 				throw err;
@@ -300,6 +306,17 @@ export async function POST(req: NextRequest) {
 			await sendTelegramMessage(
 				chatId!,
 				"⏳ AI-nya lagi kebanyakan request saat ini (rate limit). Coba kirim pesan kamu lagi dalam 15-30 detik ya.",
+			);
+			return NextResponse.json({ ok: true });
+		}
+
+		if (paymentRequired) {
+			console.error(
+				"Cerebras 402 payment_required — cek billing/quota tab di cloud.cerebras.ai",
+			);
+			await sendTelegramMessage(
+				chatId!,
+				"🚫 Kuota AI gratis sedang bermasalah di sisi provider (butuh billing). Admin perlu cek dashboard Cerebras dulu ya.",
 			);
 			return NextResponse.json({ ok: true });
 		}
