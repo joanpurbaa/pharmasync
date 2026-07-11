@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation"; // Tambahkan ini untuk redirect
 import {
     PackageIcon,
     AlertTriangleIcon,
@@ -13,15 +14,51 @@ import {
 } from "lucide-react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
+// Fungsi pembantu untuk membaca role dari JWT token di sisi client (tanpa library tambahan)
+function getRoleFromCookie(): string | null {
+    if (typeof window === "undefined") return null;
+    try {
+        const token = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("auth_token="))
+            ?.split("=")[1];
+
+        if (!token) return null;
+
+        const base64Url = token.split(".")[1];
+        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        const jsonPayload = decodeURIComponent(
+            atob(base64)
+                .split("")
+                .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+                .join("")
+        );
+        const parsed = JSON.parse(jsonPayload);
+        return parsed.role || null;
+    } catch {
+        return null;
+    }
+}
+
 export default function Dashboard() {
+    const router = useRouter();
     const data = useDashboardStore((state) => state.data);
     const isLoading = useDashboardStore((state) => state.isLoading);
     const fetchDashboard = useDashboardStore((state) => state.fetchDashboard);
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+        // 1. Cek role user begitu halaman diload
+        const role = getRoleFromCookie();
+        
+        // 2. Jika dia DRIVER, langsung tendang ke /dashboard/driver & hentikan eksekusi
+        if (role === "DRIVER") {
+            router.replace("/dashboard/driver");
+            return;
+        }
+
+        // Jika dia ADMIN/STAFF, jalankan fetch dashboard seperti biasa
         fetchDashboard();
-    }, [fetchDashboard]);
+    }, [fetchDashboard, router]);
 
     const statsData = data
         ? [
@@ -86,7 +123,6 @@ export default function Dashboard() {
                                     <span className="text-sm font-medium text-muted-foreground">
                                         {stat.title}
                                     </span>
-                                    {/* Wrapper icon sekarang otomatis merender bg-color dari statsData */}
                                     <div className={`p-2 rounded-lg ${stat.iconColor} shrink-0`}>
                                         <Icon className="w-4 h-4" />
                                     </div>
@@ -116,7 +152,6 @@ export default function Dashboard() {
                                     Daftar item medis di bawah batas aman minimum.
                                 </p>
                             </div>
-                            {/* Tombol diganti dari Custom Indigo ke Cyan Solid */}
                             <button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-secondary rounded-lg transition-all shadow-xs w-full sm:w-auto cursor-pointer">
                                 <FileTextIcon className="w-3.5 h-3.5" />
                                 Export PDF
@@ -171,7 +206,7 @@ export default function Dashboard() {
                                                         }`}>
                                                     {item.stock}
                                                 </td>
-                                                <td className="px-6 py-4 text-right">
+                                                <td className="px-4 py-4 text-right">
                                                     <span
                                                         className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${item.type === "kritis"
                                                             ? "bg-red-50 text-red-700 border border-red-100"
@@ -188,7 +223,6 @@ export default function Dashboard() {
                     </div>
 
                     <div className="p-4 bg-muted/20 border-t border-border text-center">
-                        {/* Link teks diubah ke Cyan dengan transisi hover */}
                         <button className="text-xs font-semibold text-cyan-600 hover:text-cyan-700 hover:underline transition-all cursor-pointer">
                             Lihat Semua Laporan Stok
                         </button>
