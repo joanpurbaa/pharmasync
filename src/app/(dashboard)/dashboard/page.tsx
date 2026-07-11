@@ -50,9 +50,9 @@ export default function Dashboard() {
         // 1. Cek role user begitu halaman diload
         const role = getRoleFromCookie();
         
-        // 2. Jika dia DRIVER, langsung tendang ke /dashboard/driver & hentikan eksekusi
+        // 2. Jika dia DRIVER, langsung tendang ke /driver & hentikan eksekusi
         if (role === "DRIVER") {
-            router.replace("/dashboard/driver");
+            router.replace("/driver");
             return;
         }
 

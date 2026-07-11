@@ -24,7 +24,6 @@ import {
 	Users,
 	Hospital,
 	Box,
-	PackageSearch,
 } from "lucide-react";
 
 const defaultNavGroups = [
@@ -160,9 +159,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						<SidebarMenuButton
 							size="lg"
 							className="hover:bg-transparent cursor-default">
-							<div className="relative flex aspect-square size-8 items-center justify-center rounded-lg bg-secondary text-white shrink-0 shadow-[0_0_0_3px_rgba(6,182,212,0.18)]">
-								<PackageSearch className="size-4" />
-								<span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-[#f9f871] ring-2 ring-white" />
+							<div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden shrink-0 shadow-sm">
+								<img
+									src="/icon.png"
+									alt="Pharmasync Icon"
+									className="h-full w-full object-cover"
+								/>
 							</div>
 							<div className="grid flex-1 text-left text-sm leading-tight">
 								<span className="truncate font-semibold text-slate-900">
