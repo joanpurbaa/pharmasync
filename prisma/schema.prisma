@@ -9,6 +9,7 @@ datasource db {
 enum Role {
   ADMIN
   STAFF
+  DRIVER
 }
 
 enum SourceChannel {
@@ -70,6 +71,7 @@ model User {
   stockMovements StockMovement[] @relation("MovementPerformedBy")
   itemBatches    ItemBatch[]     @relation("BatchReceivedBy")
   auditLogs      AuditLog[]
+  driver         Driver?
 
   @@map("users")
 }
@@ -127,6 +129,8 @@ model Driver {
   usualForVehicles Vehicle[]   @relation("VehicleUsualDriver")
   shipments       Shipment[]   @relation("ShipmentDriver")
   createdAt       DateTime     @default(now())
+  userId          String?      @unique
+  user            User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("drivers")
 }
