@@ -151,7 +151,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	return (
 		<Sidebar
 			collapsible="icon"
-			className="bg-white border-r border-slate-200 text-slate-900 [--sidebar-accent:var(--color-cyan-100)] [--sidebar-accent-foreground:var(--color-cyan-900)]"
+			className="bg-white border-r border-slate-200 text-slate-900"
 			{...props}>
 			<SidebarHeader className="bg-white border-b border-slate-100">
 				<SidebarMenu>
@@ -159,9 +159,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						<SidebarMenuButton
 							size="lg"
 							className="hover:bg-transparent cursor-default">
-							<div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden shrink-0 shadow-sm">
+							<div className="flex aspect-square size-12 items-center justify-center rounded-lg overflow-hidden shrink-0 shadow-sm">
 								<img
-									src="/icon.png"
+									src="/icon.svg"
 									alt="Pharmasync Icon"
 									className="h-full w-full object-cover"
 								/>

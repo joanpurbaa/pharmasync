@@ -133,7 +133,7 @@ export default function Riwayat() {
 					</div>
 				</div>
 
-				<div className="flex items-center gap-2 w-full sm:w-auto justify-start sm:justify-end lg:self-auto">
+				{/* <div className="flex items-center gap-2 w-full sm:w-auto justify-start sm:justify-end lg:self-auto">
 					<button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white text-black  rounded-lg transition-colors shadow-sm flex-1 sm:flex-initial">
 						<SlidersHorizontalIcon className="w-3.5 h-3.5 text-icon-default" />
 						Filter
@@ -142,7 +142,7 @@ export default function Riwayat() {
 						<DownloadIcon className="w-3.5 h-3.5 text-icon-default" />
 						Export PDF
 					</button>
-				</div>
+				</div> */}
 			</div>
 
 			<div className="bg-white border border-slate-200/80 rounded-xl shadow-sm overflow-hidden">

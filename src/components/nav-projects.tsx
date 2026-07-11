@@ -41,8 +41,8 @@ export function NavProjects({ groups }: { groups: NavGroup[] }) {
 										isActive={isActive}
 										className={
 											isActive
-												? "bg-secondary! text-white! hover:bg-primary2! hover:text-white! font-semibold"
-												: "text-slate-700! hover:bg-cyan-50! hover:text-secondary! font-medium"
+												? "bg-primary! text-primary-foreground! hover:bg-primary! hover:text-primary-foreground! font-semibold"
+												: "text-slate-700! hover:bg-primary/10! hover:text-primary! font-medium"
 										}
 										render={<a href={item.url} />}>
 										{item.icon}

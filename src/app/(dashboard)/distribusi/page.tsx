@@ -171,25 +171,29 @@ export default function Distribusi() {
 			title: "Dijadwalkan",
 			value: String(stats.scheduled),
 			icon: ClockIcon,
-			color: "text-icon-default",
+			color: "text-secondary",
+			bg: "bg-secondary/10",
 		},
 		{
 			title: "Dalam Perjalanan",
 			value: String(stats.shipping),
 			icon: TruckIcon,
-			color: "text-icon-default",
+			color: "text-primary",
+			bg: "bg-primary/10",
 		},
 		{
 			title: "Selesai (Hari Ini)",
 			value: String(stats.doneToday),
 			icon: CheckCircle2Icon,
-			color: "text-primary",
+			color: "text-emerald-600",
+			bg: "bg-emerald-50",
 		},
 		{
 			title: "Driver Aktif",
 			value: String(stats.activeDrivers),
 			icon: MapPinIcon,
 			color: "text-primary",
+			bg: "bg-primary/10",
 		},
 	];
 
@@ -214,13 +218,13 @@ export default function Distribusi() {
 							placeholder="Cari No. Resi..."
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
-							className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-slate-400 transition-all duration-200"
+							className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-400 transition-all duration-200"
 						/>
 					</div>
 
 					<button
 						onClick={() => setIsAddShipmentOpen(true)}
-						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-secondary rounded-lg shadow-sm transition-colors duration-200 whitespace-nowrap">
+						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-secondary cursor-pointer rounded-lg shadow-sm transition-colors duration-200 whitespace-nowrap">
 						<PlusIcon className="w-4 h-4 text-white" />
 						Buat Pengiriman Baru
 					</button>
@@ -234,10 +238,10 @@ export default function Distribusi() {
 					return (
 						<div
 							key={idx}
-							className="p-5 bg-white border border-slate-200/80 rounded-xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow duration-300">
+							className="p-5 bg-white border border-slate-200/80 border-t-4 border-t-primary rounded-xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow duration-300">
 							<div className="flex items-start justify-between">
 								<span className="text-sm font-medium text-slate-500">{card.title}</span>
-								<div className={`p-2 rounded-lg ${card.color} shrink-0`}>
+								<div className={`p-2 rounded-lg ${card.bg} ${card.color} shrink-0`}>
 									<Icon className="w-4 h-4" />
 								</div>
 							</div>
@@ -251,9 +255,8 @@ export default function Distribusi() {
 				})}
 			</div>
 
-			{/* TABLE SECTION */}
 			<div className="bg-white border border-slate-200/80 rounded-xl shadow-sm overflow-hidden">
-				<div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center bg-slate-50/40">
+				{/* <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center bg-slate-50/40">
 					<div className="flex gap-2 justify-start">
 						<button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors shadow-sm flex-1 sm:flex-initial">
 							<SlidersHorizontalIcon className="w-3.5 h-3.5" />
@@ -264,7 +267,7 @@ export default function Distribusi() {
 							Export PDF
 						</button>
 					</div>
-				</div>
+				</div> */}
 
 				<div className="overflow-x-auto w-full">
 					<table className="w-full text-left border-collapse min-w-[900px]">
@@ -282,7 +285,9 @@ export default function Distribusi() {
 						<tbody className="divide-y divide-slate-100 text-sm text-slate-700">
 							{isLoading && (
 								<tr>
-									<td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-400">
+									<td
+										colSpan={7}
+										className="px-6 py-8 text-center text-sm text-slate-400">
 										Memuat data...
 									</td>
 								</tr>
@@ -290,7 +295,9 @@ export default function Distribusi() {
 
 							{!isLoading && shipments.length === 0 && (
 								<tr>
-									<td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-400">
+									<td
+										colSpan={7}
+										className="px-6 py-8 text-center text-sm text-slate-400">
 										Belum ada pengiriman yang cocok.
 									</td>
 								</tr>
@@ -298,10 +305,14 @@ export default function Distribusi() {
 
 							{!isLoading &&
 								shipments.map((row) => (
-									<tr key={row.id} className="hover:bg-slate-50/60 transition-colors duration-200 group">
+									<tr
+										key={row.id}
+										className="hover:bg-slate-50/60 transition-colors duration-200 group">
 										<td className="px-6 py-4">
 											<div className="font-semibold text-slate-900">{row.item}</div>
-											<div className="text-xs font-mono text-slate-400 mt-0.5">{row.code}</div>
+											<div className="text-xs font-mono text-slate-400 mt-0.5">
+												{row.code}
+											</div>
 										</td>
 										<td className="px-6 py-4">
 											<span className="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-semibold rounded-md">
@@ -323,7 +334,8 @@ export default function Distribusi() {
 											<div className="text-xs text-slate-400 mt-0.5">{row.vehicle}</div>
 										</td>
 										<td className="px-6 py-4">
-											<span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${statusStyle[row.status]}`}>
+											<span
+												className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${statusStyle[row.status]}`}>
 												{statusLabel[row.status]}
 											</span>
 										</td>
@@ -367,8 +379,12 @@ export default function Distribusi() {
 				<div className="p-4 bg-white border-t border-slate-100 flex flex-col lg:flex-row items-center justify-between gap-4">
 					<div className="flex items-center gap-4 order-2 lg:order-1">
 						<span className="text-xs text-slate-500 font-medium text-center sm:text-left">
-							Menampilkan <span className="font-bold text-slate-700">{shipments.length}</span> dari{" "}
-							<span className="font-bold text-slate-700">{pagination?.totalItems ?? 0}</span> pengiriman
+							Menampilkan{" "}
+							<span className="font-bold text-slate-700">{shipments.length}</span> dari{" "}
+							<span className="font-bold text-slate-700">
+								{pagination?.totalItems ?? 0}
+							</span>{" "}
+							pengiriman
 						</span>
 
 						<div className="flex items-center gap-2">
@@ -400,7 +416,11 @@ export default function Distribusi() {
 										e.preventDefault();
 										if (pagination && pagination.page > 1) setPage(pagination.page - 1);
 									}}
-									className={!pagination || pagination.page <= 1 ? "pointer-events-none opacity-50" : ""}
+									className={
+										!pagination || pagination.page <= 1
+											? "pointer-events-none opacity-50"
+											: ""
+									}
 								/>
 							</PaginationItem>
 
@@ -434,7 +454,11 @@ export default function Distribusi() {
 										if (pagination && pagination.page < pagination.totalPages)
 											setPage(pagination.page + 1);
 									}}
-									className={!pagination || pagination.page >= pagination.totalPages ? "pointer-events-none opacity-50" : ""}
+									className={
+										!pagination || pagination.page >= pagination.totalPages
+											? "pointer-events-none opacity-50"
+											: ""
+									}
 								/>
 							</PaginationItem>
 						</PaginationContent>
@@ -442,9 +466,7 @@ export default function Distribusi() {
 				</div>
 			</div>
 
-			{/* BOTTOM SECTION: MAP & ACTIVITY */}
-			<div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-				{/* MAP */}
+			<div className="grid gap-6 grid-cols-1 lg:grid-cols-1">
 				<div
 					ref={mapSectionRef}
 					className="lg:col-span-2 bg-white border border-slate-200/80 rounded-xl shadow-sm overflow-hidden flex flex-col justify-between scroll-mt-20">
@@ -489,7 +511,7 @@ export default function Distribusi() {
 								{tracking.route.length > 0 && (
 									<div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm border border-slate-200/60 p-3 rounded-lg shadow-lg max-w-[240px] sm:max-w-xs z-[999] transition-all duration-300">
 										<div className="flex items-center gap-2">
-											<div className="h-2 w-2 rounded-full bg-indigo-600"></div>
+											<div className="h-2 w-2 rounded-full bg-primary"></div>
 											<span className="text-xs font-bold text-slate-900 truncate">
 												Menuju {tracking.destination.name}
 											</span>
@@ -509,10 +531,12 @@ export default function Distribusi() {
 				</div>
 
 				{/* ACTIVITY LOG */}
-				<div className="bg-white border border-slate-200/80 rounded-xl shadow-sm flex flex-col justify-between">
+				{/* <div className="bg-white border border-slate-200/80 rounded-xl shadow-sm flex flex-col justify-between">
 					<div>
 						<div className="p-4 border-b border-slate-100">
-							<h2 className="text-sm font-bold text-slate-900">Log Aktivitas Terbaru</h2>
+							<h2 className="text-sm font-bold text-slate-900">
+								Log Aktivitas Terbaru
+							</h2>
 						</div>
 
 						<div className="p-4 space-y-4 max-h-[320px] overflow-y-auto custom-scrollbar">
@@ -528,18 +552,22 @@ export default function Distribusi() {
 											log.type === "success"
 												? "bg-emerald-500"
 												: log.type === "shipping"
-												? "bg-blue-500"
-												: "bg-amber-500"
+													? "bg-blue-500"
+													: "bg-amber-500"
 										}`}
 									/>
 									<div className="flex-1 space-y-1">
 										<div className="flex justify-between gap-2 items-start">
-											<span className="font-bold text-slate-800 leading-none">{log.title}</span>
+											<span className="font-bold text-slate-800 leading-none">
+												{log.title}
+											</span>
 											<span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
 												{formatRelativeTime(log.time)}
 											</span>
 										</div>
-										<p className="text-slate-500 leading-relaxed text-[11px]">{log.desc}</p>
+										<p className="text-slate-500 leading-relaxed text-[11px]">
+											{log.desc}
+										</p>
 									</div>
 								</div>
 							))}
@@ -551,7 +579,7 @@ export default function Distribusi() {
 							Lihat Semua Riwayat
 						</button>
 					</div>
-				</div>
+				</div> */}
 			</div>
 
 			{/* MODALS */}

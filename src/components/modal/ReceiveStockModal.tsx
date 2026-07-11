@@ -327,7 +327,7 @@ export default function ReceiveStockModal({
 						<button
 							type="submit"
 							disabled={!selectedItem || isSubmitting}
-							className="px-4 py-2 text-sm font-semibold text-white bg-secondary rounded-lg shadow-sm transition-colors disabled:opacity-50">
+							className="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg shadow-sm transition-colors disabled:opacity-50">
 							{isSubmitting ? "Menyimpan..." : "Simpan Barang Masuk"}
 						</button>
 					</div>

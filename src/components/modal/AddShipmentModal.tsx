@@ -310,7 +310,7 @@ export default function AddShipmentModal({
                         <button
                             type="submit"
                             disabled={isSubmitting || isLoadingOptions}
-                            className="px-4 py-2 text-sm font-semibold text-white bg-secondary rounded-lg transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center min-w-[140px]">
+                            className="px-4 py-2 text-sm font-semibold text-white bg-primary cursor-pointer rounded-lg transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center min-w-[140px]">
                             {isSubmitting
                                 ? "Menyimpan..."
                                 : editData

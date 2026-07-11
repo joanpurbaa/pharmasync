@@ -227,7 +227,7 @@ export default function AddDriverModal({
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							className="px-4 py-2 text-sm font-semibold text-white bg-secondary rounded-lg shadow-sm transition-colors disabled:opacity-50">
+							className="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-secondary cursor-pointer rounded-lg shadow-sm transition-colors disabled:opacity-50">
 							{isSubmitting ? "Menyimpan..." : "Simpan Sopir"}
 						</button>
 					</div>

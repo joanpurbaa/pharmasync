@@ -60,7 +60,7 @@ const statusLabel: Record<ApiItem["status"], string> = {
 };
 
 const statusStyle: Record<ApiItem["status"], string> = {
-	AMAN: "bg-emerald-50 text-emerald-700 border border-primary",
+	AMAN: "bg-primary/10 text-primary border border-primary/20",
 	MENIPIS: "bg-amber-50 text-amber-700 border border-amber-100",
 	KRITIS: "bg-red-50 text-red-700 border border-red-100",
 	PENDING: "bg-slate-100 text-slate-700 border border-slate-200",
@@ -243,13 +243,13 @@ export default function StokBarang() {
 				<div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
 					<button
 						onClick={() => setIsReceiveStockOpen(true)}
-						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-sm transition-colors whitespace-nowrap w-full lg:w-auto">
+						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-sm transition-colors whitespace-nowrap w-full lg:w-auto cursor-pointer">
 						<PackagePlusIcon className="w-4 h-4" />
 						Terima Barang Masuk
 					</button>
 					<button
 						onClick={() => setIsAddItemOpen(true)}
-						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-secondary rounded-lg shadow-sm transition-colors whitespace-nowrap w-full lg:w-auto">
+						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-secondary cursor-pointer rounded-lg shadow-sm transition-colors whitespace-nowrap w-full lg:w-auto">
 						<PlusIcon className="w-4 h-4" />
 						Tambah Item Baru
 					</button>
@@ -320,7 +320,7 @@ export default function StokBarang() {
 													item.category === "Farmasi"
 														? "bg-purple-50 text-purple-700 border border-purple-100/50"
 														: item.category === "Alat Medis"
-															? "bg-indigo-50 text-indigo-700 border border-indigo-100/50"
+															? "bg-secondary/10 text-secondary border border-secondary/20"
 															: "bg-slate-100 text-slate-700"
 												}`}>
 												{item.category}
@@ -342,7 +342,7 @@ export default function StokBarang() {
 													<AlertTriangleIcon className="w-3.5 h-3.5 text-destructive" />
 												)}
 												{item.status === "KRITIS" && (
-													<AlertCircleIcon className="w-3.5 h-3.5 text-" />
+													<AlertCircleIcon className="w-3.5 h-3.5 text-red-600" />
 												)}
 												{statusLabel[item.status]}
 											</span>

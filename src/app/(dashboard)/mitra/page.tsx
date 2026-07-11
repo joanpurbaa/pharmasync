@@ -116,7 +116,7 @@ export default function Mitra() {
 
 					<button
 						onClick={() => setIsModalOpen(true)}
-						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-secondary rounded-lg shadow-sm transition-colors whitespace-nowrap">
+						className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-secondary cursor-pointer rounded-lg shadow-sm transition-colors whitespace-nowrap">
 						<PlusIcon className="w-4 h-4 text-white" />
 						Tambah Mitra Baru
 					</button>
