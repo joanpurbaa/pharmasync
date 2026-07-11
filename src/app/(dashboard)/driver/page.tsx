@@ -58,7 +58,7 @@ export default function DriverDashboard() {
                 // 1. Validasi Role via Backend API
                 const authRes = await fetch("/api/auth/me", { credentials: "include" });
                 if (!authRes.ok) {
-                    router.replace("/login");
+                    router.replace("/masuk");
                     return;
                 }
                 const authData = await authRes.json();
