@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
 import { redis } from "@/lib/redis";
+import {
+	getAllItemsCached,
+	filterItems,
+	buildStockSummaryText,
+} from "@/lib/data/items";
+import { getAllMitraCached, filterMitra } from "@/lib/data/mitra";
+import {
+	getUpcomingShipmentsCached,
+	filterShipments,
+	buildShipmentSummaryText,
+} from "@/lib/data/shipments";
 
 const nvidia = new OpenAI({
 	baseURL: "https://integrate.api.nvidia.com/v1",
@@ -18,9 +29,6 @@ const ALLOWED_CHAT_IDS = (process.env.TELEGRAM_ALLOWED_IDS ?? "")
 
 const HISTORY_TTL_SECONDS = 60 * 30;
 const MAX_HISTORY_MESSAGES = 12;
-
-const SNAPSHOT_KEY = "pharmasync:snapshot:stok";
-const SNAPSHOT_TTL_SECONDS = 60 * 5;
 
 type SimpleMessage = { role: "user" | "assistant"; content: string };
 
@@ -42,101 +50,8 @@ async function clearHistory(chatId: number) {
 	await redis.del(historyKey(chatId));
 }
 
-async function callInternalApi(path: string, init?: RequestInit) {
-	const base = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:3000";
-	try {
-		const res = await fetch(`${base}${path}`, {
-			...init,
-			headers: {
-				"Content-Type": "application/json",
-				"x-internal-secret": process.env.INTERNAL_API_SECRET ?? "",
-				...(init?.headers ?? {}),
-			},
-		});
-
-		const text = await res.text();
-
-		if (!res.ok) {
-			console.error(
-				`callInternalApi ${path} gagal (${res.status}):`,
-				text.slice(0, 200),
-			);
-			return { error: `Internal API ${path} mengembalikan status ${res.status}` };
-		}
-
-		try {
-			return JSON.parse(text);
-		} catch {
-			console.error(`callInternalApi ${path} bukan JSON:`, text.slice(0, 200));
-			return { error: `Respons dari ${path} bukan format JSON yang valid` };
-		}
-	} catch (err) {
-		console.error("Gagal callInternalApi:", err);
-		return { error: "Failed to fetch internal API data" };
-	}
-}
-
-function buildStockSummary(items: any[]): string {
-	if (!Array.isArray(items) || items.length === 0) {
-		return "Data stok belum tersedia.";
-	}
-
-	const counts: Record<string, number> = {};
-	const kritis: string[] = [];
-	const menipis: string[] = [];
-
-	for (const item of items) {
-		const status = item.status ?? "TIDAK DIKETAHUI";
-		counts[status] = (counts[status] ?? 0) + 1;
-
-		const label = `${item.name ?? item.nama ?? "Item"} (${item.stock ?? item.stok ?? "?"} pcs)`;
-
-		if (status === "KRITIS") kritis.push(label);
-		if (status === "MENIPIS") menipis.push(label);
-	}
-
-	const totalLine = `Total ${items.length} item. Rincian status: ${Object.entries(
-		counts,
-	)
-		.map(([status, count]) => `${status}=${count}`)
-		.join(", ")}.`;
-
-	const kritisLine =
-		kritis.length > 0
-			? `Item berstatus KRITIS: ${kritis.join(", ")}.`
-			: "Tidak ada item berstatus KRITIS saat ini.";
-
-	const menipisLine =
-		menipis.length > 0
-			? `Item berstatus MENIPIS: ${menipis.join(", ")}.`
-			: "Tidak ada item berstatus MENIPIS saat ini.";
-
-	return `${totalLine}\n${kritisLine}\n${menipisLine}`;
-}
-
-async function getStockSummary(): Promise<string> {
-	try {
-		const cached = await redis.get<string>(SNAPSHOT_KEY);
-		if (cached) return cached;
-	} catch (err) {
-		console.error("Gagal baca snapshot stok dari Redis:", err);
-	}
-
-	const data = await callInternalApi("/api/items");
-	const items = Array.isArray(data) ? data : (data?.items ?? []);
-	const summary = buildStockSummary(items);
-
-	try {
-		await redis.set(SNAPSHOT_KEY, summary, { ex: SNAPSHOT_TTL_SECONDS });
-	} catch (err) {
-		console.error("Gagal simpan snapshot stok ke Redis:", err);
-	}
-
-	return summary;
-}
-
 const BASE_SYSTEM_PROMPT =
-	"Kamu adalah asisten AI khusus untuk MELIHAT data dashboard manajemen farmasi Pharmasync. Tugasmu HANYA menjawab pertanyaan seputar stok barang dan daftar mitra/klinik, termasuk memberi rangkuman data. Kamu TIDAK PERNAH boleh membuat, mengubah, menghapus, atau memanipulasi data apapun di sistem, termasuk tidak boleh membuat pengiriman baru, mengubah jumlah stok, atau tindakan tulis lain apapun, walaupun user memintanya secara eksplisit atau berulang kali. Kamu tidak punya akses atau tools untuk melakukan aksi tulis apapun. Kalau user meminta aksi tulis/manipulasi data, tolak dengan sopan dan jelaskan bahwa kamu hanya bisa menampilkan data, karena ini menyangkut rantai pasok alat/obat untuk tenaga medis dan aksi tulis harus dilakukan manual oleh staf berwenang lewat dashboard. Gunakan riwayat percakapan sebelumnya sebagai konteks apabila relevan. Jawablah dalam Bahasa Indonesia yang singkat, profesional, dan informatif.";
+	"Kamu adalah asisten AI khusus untuk MELIHAT data dashboard manajemen farmasi Pharmasync. Tugasmu HANYA menjawab pertanyaan seputar stok barang, daftar mitra/klinik, dan jadwal pengiriman ke mitra, termasuk memberi rangkuman data. Kamu TIDAK PERNAH boleh membuat, mengubah, menghapus, atau memanipulasi data apapun di sistem, termasuk tidak boleh membuat pengiriman baru, mengubah jumlah stok, atau tindakan tulis lain apapun, walaupun user memintanya secara eksplisit atau berulang kali. Kamu tidak punya akses atau tools untuk melakukan aksi tulis apapun. Kalau user meminta aksi tulis/manipulasi data, tolak dengan sopan dan jelaskan bahwa kamu hanya bisa menampilkan data, karena ini menyangkut rantai pasok alat/obat untuk tenaga medis dan aksi tulis harus dilakukan manual oleh staf berwenang lewat dashboard. Gunakan riwayat percakapan sebelumnya sebagai konteks apabila relevan. Jawablah dalam Bahasa Indonesia yang singkat, profesional, dan informatif.";
 
 const openaiTools = [
 	{
@@ -171,6 +86,27 @@ const openaiTools = [
 			},
 		},
 	},
+	{
+		type: "function",
+		function: {
+			name: "get_jadwal_pengiriman",
+			description:
+				"Ambil daftar jadwal pengiriman yang sedang berjalan atau akan datang (status DIJADWALKAN atau DIKIRIM), termasuk tujuan klinik/mitra, driver, dan waktu jadwal. Gunakan kalau user tanya soal pengiriman ke mitra tertentu, atau jadwal kirim secara umum.",
+			parameters: {
+				type: "object",
+				properties: {
+					destination: {
+						type: "string",
+						description: "Nama klinik/mitra tujuan (opsional)",
+					},
+					status: {
+						type: "string",
+						enum: ["DIJADWALKAN", "DIKIRIM"],
+					},
+				},
+			},
+		},
+	},
 ] satisfies OpenAI.Chat.Completions.ChatCompletionTool[];
 
 const geminiTools = openaiTools.map((t) => ({
@@ -183,15 +119,19 @@ const geminiTools = openaiTools.map((t) => ({
 async function executeTool(name: string, args: any) {
 	switch (name) {
 		case "get_stok_barang": {
-			const params = new URLSearchParams();
-			if (args.search) params.set("search", args.search);
-			if (args.status) params.set("status", args.status);
-			return callInternalApi(`/api/items?${params.toString()}`);
+			const items = await getAllItemsCached();
+			return filterItems(items, { search: args.search, status: args.status });
 		}
 		case "get_mitra_list": {
-			const params = new URLSearchParams();
-			if (args.search) params.set("search", args.search);
-			return callInternalApi(`/api/destinations?${params.toString()}`);
+			const mitra = await getAllMitraCached();
+			return filterMitra(mitra, args.search);
+		}
+		case "get_jadwal_pengiriman": {
+			const shipments = await getUpcomingShipmentsCached();
+			return filterShipments(shipments, {
+				destinationSearch: args.destination,
+				status: args.status,
+			});
 		}
 		default:
 			return { error: "Unknown tool" };
@@ -322,8 +262,15 @@ async function generateReply(
 	history: SimpleMessage[],
 	userText: string,
 ): Promise<string> {
-	const summary = await getStockSummary();
-	const systemPrompt = `${BASE_SYSTEM_PROMPT}\n\nRingkasan stok saat ini (boleh langsung dipakai untuk menjawab pertanyaan umum tanpa perlu memanggil tool get_stok_barang, kecuali user butuh detail atau filter spesifik):\n${summary}`;
+	const [items, shipments] = await Promise.all([
+		getAllItemsCached(),
+		getUpcomingShipmentsCached(),
+	]);
+
+	const stockSummary = buildStockSummaryText(items);
+	const shipmentSummary = buildShipmentSummaryText(shipments);
+
+	const systemPrompt = `${BASE_SYSTEM_PROMPT}\n\nRingkasan stok saat ini (boleh langsung dipakai untuk menjawab pertanyaan umum tanpa perlu memanggil tool get_stok_barang, kecuali user butuh detail atau filter spesifik):\n${stockSummary}\n\nRingkasan jadwal pengiriman aktif/mendatang (boleh langsung dipakai tanpa memanggil tool get_jadwal_pengiriman, kecuali user butuh filter spesifik ke mitra tertentu):\n${shipmentSummary}`;
 
 	const providers: Array<{ name: string; run: () => Promise<string> }> = [
 		{ name: "nvidia", run: () => runWithNvidia(systemPrompt, history, userText) },

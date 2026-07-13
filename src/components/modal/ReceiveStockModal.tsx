@@ -146,7 +146,7 @@ export default function ReceiveStockModal({
 					<button
 						onClick={onClose}
 						className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-						<XIcon className="w-4 h-4" />
+						<XIcon className="w-4 h-4 cursor-pointer" />
 					</button>
 				</div>
 
@@ -321,13 +321,13 @@ export default function ReceiveStockModal({
 						<button
 							type="button"
 							onClick={onClose}
-							className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors">
+							className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors cursor-pointer">
 							Batal
 						</button>
 						<button
 							type="submit"
 							disabled={!selectedItem || isSubmitting}
-							className="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg shadow-sm transition-colors disabled:opacity-50">
+							className="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg shadow-sm transition-colors disabled:opacity-50 cursor-pointer">
 							{isSubmitting ? "Menyimpan..." : "Simpan Barang Masuk"}
 						</button>
 					</div>

@@ -102,7 +102,7 @@ export default function AddDestinationModal({
 						{editData ? "Edit Mitra" : "Tambah Mitra Baru"}
 					</h2>
 					<button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-						<XIcon className="w-5 h-5" />
+						<XIcon className="w-5 h-5 cursor-pointer" />
 					</button>
 				</div>
 
@@ -171,13 +171,13 @@ export default function AddDestinationModal({
 						<button
 							type="button"
 							onClick={onClose}
-							className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+							className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
 							Batal
 						</button>
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							className="px-4 py-2 text-sm font-semibold text-white bg-secondary rounded-lg transition-colors disabled:opacity-50">
+							className="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-secondary cursor-pointer rounded-lg transition-colors disabled:opacity-50">
 							{isSubmitting
 								? "Menyimpan..."
 								: editData

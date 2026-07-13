@@ -117,7 +117,7 @@ export default function Petugas() {
 				<div className="flex items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
 					<button
 						onClick={() => setIsAddVehicleOpen(true)}
-						className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-foreground bg-card border border-border hover:bg-muted rounded-lg shadow-sm transition-colors">
+						className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-foreground bg-card border border-border hover:bg-muted rounded-lg shadow-sm transition-colors cursor-pointer">
 						Tambah Kendaraan
 					</button>
 					<button

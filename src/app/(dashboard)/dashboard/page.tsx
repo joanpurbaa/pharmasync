@@ -99,10 +99,13 @@ export default function Dashboard() {
 
 	return (
 		<div className="flex flex-col w-full p-4 sm:p-6 space-y-6">
-			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+			<div className="space-y-1">
 				<h1 className="text-xl font-bold tracking-tight text-foreground">
 					Overview Dashboard
 				</h1>
+				<p className="text-sm text-muted-foreground font-medium">
+					Memantau Rantai Pasok.
+				</p>
 			</div>
 
 			<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -228,7 +231,9 @@ export default function Dashboard() {
 					</div>
 
 					<div className="p-4 bg-muted/20 border-t border-border text-center">
-						<Link href="/stok-barang" className="text-xs font-semibold text-primary hover:text-primary/80 hover:underline transition-all cursor-pointer">
+						<Link
+							href="/stok-barang"
+							className="text-xs font-semibold text-primary hover:text-primary/80 hover:underline transition-all cursor-pointer">
 							Lihat Semua Laporan Stok
 						</Link>
 					</div>
@@ -287,7 +292,9 @@ export default function Dashboard() {
 					</div>
 
 					<div className="p-4 border-t border-border">
-						<Link href="/riwayat" className="block text-center w-full py-2 bg-primary hover:bg-secondary text-secondary-foreground text-xs font-semibold rounded-lg border border-border transition-colors cursor-pointer">
+						<Link
+							href="/riwayat"
+							className="block text-center w-full py-2 bg-primary hover:bg-secondary text-secondary-foreground text-xs font-semibold rounded-lg border border-border transition-colors cursor-pointer">
 							Buka Riwayat Lengkap
 						</Link>
 					</div>

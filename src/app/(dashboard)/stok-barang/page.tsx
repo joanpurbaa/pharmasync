@@ -189,9 +189,14 @@ export default function StokBarang() {
 	return (
 		<div className="flex flex-col w-full p-4 sm:p-6 space-y-6">
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-				<h1 className="text-xl font-bold tracking-tight text-slate-900">
-					Stok Barang
-				</h1>
+				<div className="space-y-1">
+					<h1 className="text-xl font-bold tracking-tight text-foreground">
+						Stok Barang
+					</h1>
+					<p className="text-sm text-muted-foreground font-medium">
+						Mengelola dan memantau stok barang
+					</p>
+				</div>
 
 				<div className="relative w-full sm:w-72">
 					<SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-icon-default" />
@@ -373,13 +378,13 @@ export default function StokBarang() {
 												<button
 													onClick={() => setSelectedItemId(item.id)}
 													className="inline-flex items-center p-1.5 text-icon-default hover:bg-slate-100 rounded-lg transition-colors">
-													<Eye className="w-4 h-4" />
+													<Eye className="w-4 h-4 cursor-pointer" />
 												</button>
 												<button
 													onClick={() => setEditTarget(item)}
 													className="inline-flex items-center p-1.5 text-icon-default hover:bg-slate-100 rounded-lg transition-colors"
 													title="Edit Item">
-													<PencilIcon className="w-4 h-4" />
+													<PencilIcon className="w-4 h-4 cursor-pointer" />
 												</button>
 												<button
 													onClick={() => {
@@ -388,7 +393,7 @@ export default function StokBarang() {
 													}}
 													className="inline-flex items-center p-1.5 text-icon-warning hover:bg-red-50 rounded-lg transition-colors"
 													title="Hapus Item">
-													<Trash2Icon className="w-4 h-4" />
+													<Trash2Icon className="w-4 h-4 cursor-pointer" />
 												</button>
 											</div>
 										</td>

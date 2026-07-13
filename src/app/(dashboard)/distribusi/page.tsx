@@ -201,13 +201,13 @@ export default function Distribusi() {
 		<div className="flex flex-col w-full p-4 sm:p-6 space-y-6 bg-slate-50/50 min-h-screen">
 			{/* HEADER */}
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-				<div>
-					<span className="text-[10px] sm:text-xs font-semibold text-slate-500 block uppercase tracking-wider">
-						Manajemen Logistik & Rantai Pasok
-					</span>
-					<h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-1">
-						Daftar Pengiriman Aktif
+				<div className="space-y-1">
+					<h1 className="text-xl font-bold tracking-tight text-foreground">
+						Distribusi
 					</h1>
+					<p className="text-sm text-muted-foreground font-medium">
+						Menjadwalkan pengiriman dan pemantauan distribusi barang
+					</p>
 				</div>
 
 				<div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-stretch sm:items-center">
@@ -342,10 +342,11 @@ export default function Distribusi() {
 										<td className="px-6 py-4 text-right">
 											<DropdownMenu>
 												<DropdownMenuTrigger className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
-													<MoreVerticalIcon className="w-4 h-4" />
+													<MoreVerticalIcon className="w-4 h-4 cursor-pointer" />
 												</DropdownMenuTrigger>
 												<DropdownMenuContent align="end" className="w-44">
 													<DropdownMenuItem
+														className="cursor-pointer"
 														onClick={() => {
 															setSelectedShipmentId(row.id);
 															mapSectionRef.current?.scrollIntoView({
@@ -356,13 +357,15 @@ export default function Distribusi() {
 														<MapIcon className="w-3.5 h-3.5 mr-2" />
 														Lihat Peta
 													</DropdownMenuItem>
-													<DropdownMenuItem onClick={() => setEditTarget(row.raw)}>
+													<DropdownMenuItem
+														className="cursor-pointer"
+														onClick={() => setEditTarget(row.raw)}>
 														<PencilIcon className="w-3.5 h-3.5 mr-2" />
 														Edit Pengiriman
 													</DropdownMenuItem>
 													<DropdownMenuItem
 														onClick={() => setDeleteTargetId(row.id)}
-														className="text-red-600 focus:text-red-600 focus:bg-red-50">
+														className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer">
 														<Trash2Icon className="w-3.5 h-3.5 mr-2" />
 														Hapus
 													</DropdownMenuItem>

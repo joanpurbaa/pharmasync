@@ -6,7 +6,6 @@ export interface CriticalStockItem {
 	status: string;
 	type: "kritis" | "menipis";
 }
-
 export interface Activity {
 	title: string;
 	time: string;
@@ -14,7 +13,6 @@ export interface Activity {
 	detail: string;
 	isLatest: boolean;
 }
-
 export interface DashboardData {
 	totalItems: number;
 	criticalStockCount: number;

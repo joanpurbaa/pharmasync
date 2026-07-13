@@ -93,13 +93,11 @@ export default function Mitra() {
 	return (
 		<div className="flex flex-col w-full p-4 sm:p-6 space-y-6 bg-slate-50/50">
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-				<div>
-					<span className="text-[10px] sm:text-xs font-medium text-slate-400 block uppercase tracking-wider">
-						Manajemen Fasilitas Kesehatan
-					</span>
-					<h1 className="text-xl font-bold tracking-tight text-slate-900 mt-0.5">
-						Data Jaringan Mitra / Klinik
-					</h1>
+				<div className="space-y-1">
+					<h1 className="text-xl font-bold tracking-tight text-foreground">Mitra</h1>
+					<p className="text-sm text-muted-foreground font-medium">
+						Pendataan mitra baik klinik, puskesmas, atau rumah sakit
+					</p>
 				</div>
 
 				<div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-stretch sm:items-center">
@@ -204,7 +202,7 @@ export default function Mitra() {
 															phone: mitra.phone,
 														})
 													}
-													className="inline-flex items-center p-1.5 text-icon-default hover:bg-slate-100 rounded-lg transition-colors"
+													className="inline-flex items-center p-1.5 text-icon-default hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
 													title="Edit Mitra">
 													<PencilIcon className="w-4 h-4" />
 												</button>
@@ -213,7 +211,7 @@ export default function Mitra() {
 														setDeleteError(null);
 														setDeleteTargetId(mitra.id);
 													}}
-													className="inline-flex items-center p-1.5 text-icon-warning hover:bg-red-50 rounded-lg transition-colors"
+													className="inline-flex items-center p-1.5 text-icon-warning hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
 													title="Hapus Mitra">
 													<Trash2Icon className="w-4 h-4" />
 												</button>
@@ -355,9 +353,11 @@ export default function Mitra() {
 						)}
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel disabled={isLoading}>Batal</AlertDialogCancel>
+						<AlertDialogCancel className="cursor-pointer" disabled={isLoading}>
+							Batal
+						</AlertDialogCancel>
 						<AlertDialogAction
-							className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+							className="bg-red-600 hover:bg-red-700 focus:ring-red-600 cursor-pointer"
 							onClick={(e) => {
 								e.preventDefault();
 								if (deleteTargetId) deleteMitra(deleteTargetId);

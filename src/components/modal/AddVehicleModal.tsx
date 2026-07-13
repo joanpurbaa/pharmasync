@@ -96,7 +96,7 @@ export default function AddVehicleModal({
 					<button
 						onClick={onClose}
 						className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-						<XIcon className="w-4 h-4" />
+						<XIcon className="w-4 h-4 cursor-pointer" />
 					</button>
 				</div>
 
@@ -203,13 +203,13 @@ export default function AddVehicleModal({
 						<button
 							type="button"
 							onClick={onClose}
-							className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors">
+							className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors cursor-pointer">
 							Batal
 						</button>
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							className="px-4 py-2 text-sm font-semibold text-white bg-secondary rounded-lg shadow-sm transition-colors disabled:opacity-50">
+							className="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-secondary cursor-pointer rounded-lg shadow-sm transition-colors disabled:opacity-50">
 							{isSubmitting ? "Menyimpan..." : "Simpan Kendaraan"}
 						</button>
 					</div>

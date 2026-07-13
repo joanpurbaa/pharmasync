@@ -155,7 +155,6 @@ export default function Riwayat() {
 								<th className="px-6 py-3.5">Tipe Aksi</th>
 								<th className="px-6 py-3.5">Item Terdampak</th>
 								<th className="px-6 py-3.5">Perubahan</th>
-								<th className="px-6 py-3.5 text-center">Sumber</th>
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-slate-100 text-sm text-slate-700">
@@ -230,20 +229,6 @@ export default function Riwayat() {
 												}>
 												{log.change}
 											</span>
-										</td>
-
-										<td className="px-6 py-4">
-											<div className="flex justify-center text-icon-default">
-												{log.source === "web" ? (
-													<span title="Web Admin Panel">
-														<MonitorIcon className="w-4 h-4 text-icon-default" />
-													</span>
-												) : (
-													<span title="Automated System / Robot">
-														<BotIcon className="w-4 h-4 text-icon-default" />
-													</span>
-												)}
-											</div>
 										</td>
 									</tr>
 								))}
