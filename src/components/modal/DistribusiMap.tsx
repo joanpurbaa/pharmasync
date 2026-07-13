@@ -5,9 +5,7 @@ import L from "leaflet";
 import { useEffect, useMemo, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 
-// ---------------------------------------------------------------------------
 // Ikon tetap
-// ---------------------------------------------------------------------------
 const clinicIcon = L.divIcon({
     className: "",
     html: `<div style="width:14px;height:14px;border-radius:9999px;background:#0f172a;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
@@ -15,9 +13,7 @@ const clinicIcon = L.divIcon({
     iconAnchor: [7, 7],
 });
 
-// ---------------------------------------------------------------------------
 // Utility menghitung bearing
-// ---------------------------------------------------------------------------
 function calculateBearing(
     lat1: number,
     lng1: number,
@@ -34,9 +30,7 @@ function calculateBearing(
     return (toDeg(Math.atan2(y, x)) + 360) % 360;
 }
 
-// ---------------------------------------------------------------------------
 // Utility menghitung jarak (Haversine) dalam meter
-// ---------------------------------------------------------------------------
 function getDistanceInMeters(
     lat1: number,
     lng1: number,
@@ -56,9 +50,7 @@ function getDistanceInMeters(
     return R * c;
 }
 
-// ---------------------------------------------------------------------------
 // Props
-// ---------------------------------------------------------------------------
 interface DistribusiMapProps {
     destination: {
         name: string;
@@ -68,9 +60,7 @@ interface DistribusiMapProps {
     route: { latitude: number; longitude: number }[];
 }
 
-// ---------------------------------------------------------------------------
 // Komponen pengendali viewport
-// ---------------------------------------------------------------------------
 function FitBounds({ destination, route }: DistribusiMapProps) {
     const map = useMap();
     useEffect(() => {
@@ -92,9 +82,7 @@ function FitBounds({ destination, route }: DistribusiMapProps) {
     return null;
 }
 
-// ---------------------------------------------------------------------------
 // Komponen Utama
-// ---------------------------------------------------------------------------
 export default function DistribusiMap({
     destination,
     route,

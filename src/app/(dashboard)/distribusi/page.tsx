@@ -613,9 +613,9 @@ export default function Distribusi() {
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel>Batal</AlertDialogCancel>
+						<AlertDialogCancel className="cursor-pointer">Batal</AlertDialogCancel>
 						<AlertDialogAction
-							className="bg-red-600 hover:bg-red-700 text-white focus:ring-red-600 transition-colors duration-200"
+							className="bg-red-600 hover:bg-red-700 text-white focus:ring-red-600 transition-colors duration-200 cursor-pointer"
 							onClick={() => {
 								if (deleteTargetId) deleteShipment(deleteTargetId);
 								setDeleteTargetId(null);

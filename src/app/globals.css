@@ -61,9 +61,9 @@
 
 :root {
 	--background: oklch(0.99 0.002 240);
-  --foreground: oklch(0.18 0.02 240);
+	--foreground: oklch(0.18 0.02 240);
 	--card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 240);
+	--card-foreground: oklch(0.18 0.02 240);
 	--popover: oklch(1 0 0);
 	--popover-foreground: oklch(0.18 0.035 160);
 
@@ -81,12 +81,12 @@
 	--btn-custom-foreground: oklch(0.99 0 0);
 
 	--muted: oklch(0.96 0.008 240);
-  --muted-foreground: oklch(0.5 0.02 240);
+	--muted-foreground: oklch(0.5 0.02 240);
 	--accent: oklch(0.93 0.03 240);
-  --accent-foreground: oklch(0.28 0.06 240);
+	--accent-foreground: oklch(0.28 0.06 240);
 	--destructive: oklch(0.577 0.245 27.325);
 	--border: oklch(0.91 0.012 240);
-  --input: oklch(0.91 0.012 240);
+	--input: oklch(0.91 0.012 240);
 	--ring: var(--primary2);
 	--chart-1: oklch(0.72 0.15 175);
 	--chart-2: oklch(0.58 0.16 162);
@@ -96,12 +96,12 @@
 	--radius: 0.625rem;
 	--sidebar: var(--secondary2);
 	--sidebar-foreground: oklch(0.95 0.01 240);
-  --sidebar-primary: var(--primary2);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: color-mix(in oklch, var(--primary2) 25%, var(--secondary2));
-  --sidebar-accent-foreground: oklch(0.99 0 0);
-  --sidebar-border: color-mix(in oklch, var(--secondary2) 80%, white);
-  --sidebar-ring: var(--primary2);
+	--sidebar-primary: var(--primary2);
+	--sidebar-primary-foreground: oklch(0.99 0 0);
+	--sidebar-accent: color-mix(in oklch, var(--primary2) 25%, var(--secondary2));
+	--sidebar-accent-foreground: oklch(0.99 0 0);
+	--sidebar-border: color-mix(in oklch, var(--secondary2) 80%, white);
+	--sidebar-ring: var(--primary2);
 }
 
 .dark {
@@ -138,6 +138,10 @@
 	--sidebar-accent-foreground: oklch(0.9 0.04 165);
 	--sidebar-border: oklch(1 0 0 / 10%);
 	--sidebar-ring: oklch(0.75 0.13 145);
+}
+
+* {
+	scroll-behavior: smooth;
 }
 
 @layer base {
