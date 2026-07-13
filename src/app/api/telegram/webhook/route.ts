@@ -9,7 +9,7 @@ import {
 } from "@/lib/data/items";
 import { getAllMitraCached, filterMitra } from "@/lib/data/mitra";
 import {
-	getUpcomingShipmentsCached,
+	getShipmentsCached,
 	filterShipments,
 	buildShipmentSummaryText,
 } from "@/lib/data/shipments";
@@ -91,7 +91,7 @@ const openaiTools = [
 		function: {
 			name: "get_jadwal_pengiriman",
 			description:
-				"Ambil daftar jadwal pengiriman yang sedang berjalan atau akan datang (status DIJADWALKAN atau DIKIRIM), termasuk tujuan klinik/mitra, driver, dan waktu jadwal. Gunakan kalau user tanya soal pengiriman ke mitra tertentu, atau jadwal kirim secara umum.",
+				"Ambil daftar pengiriman, termasuk yang sedang aktif (DIJADWALKAN/DIKIRIM) maupun riwayat yang sudah SELESAI atau DIBATALKAN, beserta tujuan klinik/mitra, driver, dan waktu jadwal. Gunakan kalau user tanya soal pengiriman ke mitra tertentu, riwayat kirim, atau jadwal kirim secara umum.",
 			parameters: {
 				type: "object",
 				properties: {
@@ -127,7 +127,7 @@ async function executeTool(name: string, args: any) {
 			return filterMitra(mitra, args.search);
 		}
 		case "get_jadwal_pengiriman": {
-			const shipments = await getUpcomingShipmentsCached();
+			const shipments = await getShipmentsCached();
 			return filterShipments(shipments, {
 				destinationSearch: args.destination,
 				status: args.status,
@@ -264,7 +264,7 @@ async function generateReply(
 ): Promise<string> {
 	const [items, shipments] = await Promise.all([
 		getAllItemsCached(),
-		getUpcomingShipmentsCached(),
+		getShipmentsCached(),
 	]);
 
 	const stockSummary = buildStockSummaryText(items);

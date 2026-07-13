@@ -17,11 +17,10 @@ export interface ShipmentSnapshot {
 	status: string;
 }
 
-async function fetchUpcomingShipmentsFromDb(): Promise<ShipmentSnapshot[]> {
+async function fetchShipmentsFromDb(): Promise<ShipmentSnapshot[]> {
 	const shipments = await db.shipment.findMany({
-		where: { status: { in: ["DIJADWALKAN", "DIKIRIM"] } },
 		include: { item: true, destination: true, driver: true, vehicle: true },
-		orderBy: { scheduledAt: "asc" },
+		orderBy: { scheduledAt: "desc" },
 		take: 100,
 	});
 
@@ -39,9 +38,7 @@ async function fetchUpcomingShipmentsFromDb(): Promise<ShipmentSnapshot[]> {
 	}));
 }
 
-export async function getUpcomingShipmentsCached(): Promise<
-	ShipmentSnapshot[]
-> {
+export async function getShipmentsCached(): Promise<ShipmentSnapshot[]> {
 	try {
 		const cached = await redis.get<ShipmentSnapshot[]>(SHIPMENTS_CACHE_KEY);
 		if (cached) return cached;
@@ -49,7 +46,7 @@ export async function getUpcomingShipmentsCached(): Promise<
 		console.error("Gagal baca cache jadwal pengiriman:", err);
 	}
 
-	const shipments = await fetchUpcomingShipmentsFromDb();
+	const shipments = await fetchShipmentsFromDb();
 
 	try {
 		await redis.set(SHIPMENTS_CACHE_KEY, shipments, { ex: SHIPMENTS_CACHE_TTL });
@@ -87,9 +84,16 @@ export function filterShipments(
 
 export function buildShipmentSummaryText(list: ShipmentSnapshot[]): string {
 	if (list.length === 0)
-		return "Tidak ada jadwal pengiriman yang berlangsung atau akan datang saat ini.";
+		return "Belum ada data pengiriman sama sekali di sistem.";
 
-	const lines = list.slice(0, 15).map((s) => {
+	const active = list.filter(
+		(s) => s.status === "DIJADWALKAN" || s.status === "DIKIRIM",
+	);
+	const recentDone = list
+		.filter((s) => s.status === "SELESAI" || s.status === "DIBATALKAN")
+		.slice(0, 10);
+
+	const formatLine = (s: ShipmentSnapshot) => {
 		const date = new Date(s.scheduledAt).toLocaleDateString("id-ID", {
 			day: "2-digit",
 			month: "short",
@@ -100,7 +104,17 @@ export function buildShipmentSummaryText(list: ShipmentSnapshot[]): string {
 			minute: "2-digit",
 		});
 		return `${s.code}: ${s.itemName} (${s.quantity} ${s.unit}) ke ${s.destinationName}, jadwal ${date} ${time}, status ${s.status}, driver ${s.driverName ?? "belum ditentukan"}.`;
-	});
+	};
 
-	return `Ada ${list.length} jadwal pengiriman aktif/mendatang. Berikut ringkasannya:\n${lines.join("\n")}`;
+	const activeLine =
+		active.length > 0
+			? `Ada ${active.length} pengiriman aktif (dijadwalkan/dalam perjalanan):\n${active.map(formatLine).join("\n")}`
+			: "Tidak ada pengiriman yang sedang dijadwalkan atau dalam perjalanan saat ini.";
+
+	const doneLine =
+		recentDone.length > 0
+			? `\n\nRiwayat pengiriman terbaru (selesai/dibatalkan):\n${recentDone.map(formatLine).join("\n")}`
+			: "";
+
+	return `${activeLine}${doneLine}`;
 }
