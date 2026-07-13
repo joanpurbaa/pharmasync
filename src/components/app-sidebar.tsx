@@ -24,6 +24,7 @@ import {
 	Users,
 	Hospital,
 	Box,
+	SparklesIcon,
 } from "lucide-react";
 
 const defaultNavGroups = [
@@ -42,6 +43,18 @@ const defaultNavGroups = [
 			{ name: "Mitra", url: "/mitra", icon: <Hospital /> },
 			{ name: "Riwayat", url: "/riwayat", icon: <History /> },
 			{ name: "Visualisasi 3D", url: "/warehouse", icon: <Box /> },
+		],
+	},
+	{
+		label: "Asisten AI",
+		items: [
+			{
+				name: "Chat Pharmasync AI",
+				url: "https://t.me/PharmasyncBot",
+				icon: <SparklesIcon />,
+				external: true,
+				accent: true,
+			},
 		],
 	},
 ];
@@ -159,7 +172,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						<SidebarMenuButton
 							size="lg"
 							className="hover:bg-transparent cursor-default">
-							<div className="flex aspect-square size-12 items-center justify-center rounded-lg overflow-hidden shrink-0 shadow-sm">
+							<div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden shrink-0 shadow-sm">
 								<img
 									src="/icon.svg"
 									alt="Pharmasync Icon"
