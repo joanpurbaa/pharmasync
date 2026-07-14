@@ -1,27 +1,6 @@
 "use client";
 
-/**
- * PharmasyncMiniDemo
- * ------------------
- * Mini interactive preview of the Pharmasync dashboard, meant to be dropped
- * into the landing page (e.g. right below the "Cara Lama vs Dengan
- * Pharmasync" section) so visitors can click around a *read-only* version
- * of the real product without leaving the marketing page.
- *
- * - Sidebar buttons switch the content panel on the right (useState only,
- *   no routing needed).
- * - Every "add / edit / delete" action, pagination control, and "show per
- *   page" selector has been stripped out on purpose — this is a look-only
- *   demo, not a functional app.
- * - Data below is static mock data mirroring the real dashboard's shape.
- *
- * Usage:
- *   import PharmasyncMiniDemo from "@/components/PharmasyncMiniDemo";
- *   ...
- *   <PharmasyncMiniDemo />
- */
-
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import {
 	LayoutDashboardIcon,
 	PackageIcon,
@@ -235,15 +214,26 @@ function Th({ children }: { children: ReactNode }) {
 	);
 }
 
-function Td({ children, className }: { children: ReactNode; className?: string }) {
+function Td({
+	children,
+	className,
+	wrap,
+}: {
+	children: ReactNode;
+	className?: string;
+	wrap?: boolean;
+}) {
 	return (
-		<td className={`px-4 py-3 text-sm text-slate-700 whitespace-nowrap ${className ?? ""}`}>
+		<td
+			className={`px-4 py-3 text-sm text-slate-700 ${
+				wrap ? "whitespace-normal break-words" : "whitespace-nowrap"
+			} ${className ?? ""}`}>
 			{children}
 		</td>
 	);
 }
 
-function PanelHeader({ title, subtitle }: {title: string, subtitle: string}) {
+function PanelHeader({ title, subtitle }: { title: string; subtitle: string }) {
 	return (
 		<div className="mb-4">
 			<h4 className="font-bold text-slate-900">{title}</h4>
@@ -408,7 +398,9 @@ function renderPanel(active: string) {
 						{mitra.map((m) => (
 							<tr key={m.nama}>
 								<Td>{m.nama}</Td>
-								<Td className="max-w-xs">{m.alamat}</Td>
+								<Td className="max-w-xs" wrap>
+									{m.alamat}
+								</Td>
 								<Td>{m.telp}</Td>
 								<Td>
 									<Badge value={m.status} />
@@ -497,12 +489,53 @@ function renderPanel(active: string) {
 	}
 }
 
+const FLAT_NAV_KEYS = NAV_GROUPS.flatMap((group) =>
+	group.items.map((item) => item.key),
+);
+const AUTOPLAY_INTERVAL = 3200;
+const RESUME_AFTER_IDLE = 6000;
+
 export default function PharmasyncMiniDemo() {
 	const [active, setActive] = useState("dashboard");
+	const [isPaused, setIsPaused] = useState(false);
+
+	const autoplayRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	useEffect(() => {
+		if (isPaused) return;
+
+		autoplayRef.current = setInterval(() => {
+			setActive((current) => {
+				const idx = FLAT_NAV_KEYS.indexOf(current);
+				const nextIdx = (idx + 1) % FLAT_NAV_KEYS.length;
+				return FLAT_NAV_KEYS[nextIdx];
+			});
+		}, AUTOPLAY_INTERVAL);
+
+		return () => {
+			if (autoplayRef.current) clearInterval(autoplayRef.current);
+		};
+	}, [isPaused]);
+
+	useEffect(() => {
+		return () => {
+			if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+		};
+	}, []);
+
+	const handleManualClick = (key: string) => {
+		setActive(key);
+		setIsPaused(true);
+
+		if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+		resumeTimeoutRef.current = setTimeout(() => {
+			setIsPaused(false);
+		}, RESUME_AFTER_IDLE);
+	};
 
 	return (
 		<div className="max-w-5xl mx-auto rounded-2xl border border-slate-200 shadow-xl overflow-hidden bg-white">
-			{/* fake app top bar */}
 			<div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50">
 				<div className="flex gap-1.5">
 					<span className="w-2.5 h-2.5 rounded-full bg-red-300" />
@@ -512,10 +545,15 @@ export default function PharmasyncMiniDemo() {
 				<span className="ml-3 text-xs font-medium text-slate-400">
 					pharmasync.app/dashboard — demo interaktif (read-only)
 				</span>
+				{!isPaused && (
+					<span className="ml-auto flex items-center gap-1.5 text-[10px] font-semibold text-primary">
+						<span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+						Auto demo
+					</span>
+				)}
 			</div>
 
 			<div className="flex h-[520px]">
-				{/* sidebar */}
 				<aside className="w-44 sm:w-56 shrink-0 border-r border-slate-100 bg-white overflow-y-auto py-4">
 					{NAV_GROUPS.map((group) => (
 						<div key={group.label} className="mb-4 px-3">
@@ -526,7 +564,7 @@ export default function PharmasyncMiniDemo() {
 								{group.items.map(({ key, label, icon: Icon }) => (
 									<button
 										key={key}
-										onClick={() => setActive(key)}
+										onClick={() => handleManualClick(key)}
 										className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm font-medium transition-colors text-left ${
 											active === key
 												? "bg-primary/10 text-primary"
@@ -541,7 +579,6 @@ export default function PharmasyncMiniDemo() {
 					))}
 				</aside>
 
-				{/* content */}
 				<section className="flex-1 min-w-0 overflow-y-auto p-6">
 					{renderPanel(active)}
 				</section>
