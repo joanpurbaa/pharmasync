@@ -20,8 +20,8 @@ const statusPriority: Record<string, number> = {
 type StockStatus = "AMAN" | "MENIPIS" | "KRITIS" | "PENDING";
 
 function getStockStatus(current: number, critical: number, min: number) {
-    if (current == critical) return "KRITIS";  
-    if (current == min) return "MENIPIS";      
+    if (current <= critical) return "KRITIS";  
+    if (current <= min) return "MENIPIS";      
     return "AMAN";                         
 }
 
