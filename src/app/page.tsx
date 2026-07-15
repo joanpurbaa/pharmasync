@@ -261,34 +261,34 @@ export default function Home() {
 						</a>
 					</div>
 
-					<div className="relative mt-16 sm:mt-24 lg:mt-30 mb-10 h-[260px] sm:h-[380px] lg:h-[420px] hidden sm:flex items-end justify-center">
-						<div className="absolute left-[4%] sm:left-0 bottom-6 sm:bottom-8 w-[70px] sm:w-sm z-0">
-							<Image
-								src="/tablet.webp"
-								alt="Distribusi Pharmasync di tablet"
-								width={1000}
-								height={1000}
-								className="w-full h-auto drop-shadow-xl"
+					<div
+						id="demo"
+						className="hidden sm:block max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20 lg:pt-36 relative">
+
+						<div className="relative">
+							<FloatBadge
+								icon={<ActivityIcon className="w-4 h-4 text-primary-foreground" />}
+								label="Stok Real-time"
+								sublabel="Update otomatis"
+								className="-top-6 left-4"
+								delay={0.1}
 							/>
-						</div>
-						<div className="absolute left-1/2 -translate-x-1/2 w-[230px] sm:w-5xl z-10">
-							<Image
-								src="/laptop.webp"
-								alt="Dashboard Pharmasync di laptop"
-								width={1000}
-								height={1000}
-								className="w-full h-auto drop-shadow-2xl"
-								priority
+							<FloatBadge
+								icon={<MapPinIcon className="w-4 h-4 text-primary-foreground" />}
+								label="Live Tracking GPS"
+								sublabel="Distribusi terpantau"
+								className="top-1/3 -right-8"
+								delay={0.3}
 							/>
-						</div>
-						<div className="absolute right-[4%] sm:right-0 bottom-8 w-[55px] sm:w-[250px] z-20">
-							<Image
-								src="/phone.webp"
-								alt="Asisten AI Pharmasync di HP"
-								width={300}
-								height={520}
-								className="w-full h-auto drop-shadow-xl"
+							<FloatBadge
+								icon={<MessageSquareIcon className="w-4 h-4 text-primary-foreground" />}
+								label="Chat via Telegram"
+								sublabel="Cek data tanpa login"
+								className="-bottom-6 left-10"
+								delay={0.5}
 							/>
+
+							<PharmasyncMiniDemo />
 						</div>
 					</div>
 				</div>
@@ -483,48 +483,6 @@ export default function Home() {
 					<Reveal delay={150}>
 						<ComparisonInteractive />
 					</Reveal>
-				</div>
-			</section>
-
-			{/* MINI DEMO */}
-			<section
-				id="demo"
-				className="hidden sm:block max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20 lg:py-24 relative">
-				<Reveal>
-					<div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-						<h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
-							Coba Langsung Dashboard-nya
-						</h2>
-						<p className="text-slate-500 text-sm sm:text-base mt-3">
-							Klik menu di sidebar untuk lihat gimana Pharmasync bekerja.
-						</p>
-					</div>
-				</Reveal>
-
-				<div className="relative">
-					<FloatBadge
-						icon={<ActivityIcon className="w-4 h-4 text-primary-foreground" />}
-						label="Stok Real-time"
-						sublabel="Update otomatis"
-						className="-top-6 left-4"
-						delay={0.1}
-					/>
-					<FloatBadge
-						icon={<MapPinIcon className="w-4 h-4 text-primary-foreground" />}
-						label="Live Tracking GPS"
-						sublabel="Distribusi terpantau"
-						className="top-1/3 -right-8"
-						delay={0.3}
-					/>
-					<FloatBadge
-						icon={<MessageSquareIcon className="w-4 h-4 text-primary-foreground" />}
-						label="Chat via Telegram"
-						sublabel="Cek data tanpa login"
-						className="-bottom-6 left-10"
-						delay={0.5}
-					/>
-
-					<PharmasyncMiniDemo />
 				</div>
 			</section>
 
