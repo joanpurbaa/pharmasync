@@ -232,17 +232,14 @@ export default function Home() {
 				</div>
 
 				<div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 pb-10 text-center">
-					<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-6">
-						<ShieldCheckIcon className="w-3.5 h-3.5" />
-						Supply Chain Management System
-					</span>
+					
 					<h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 leading-tight max-w-3xl mx-auto">
 						Kelola Rantai Pasok Farmasi Anda dalam{" "}
 						<span className="text-primary">Satu Sistem Terpusat</span>
 					</h1>
 					<p className="text-slate-500 text-sm sm:text-base lg:text-lg mt-5 max-w-xl mx-auto leading-relaxed">
 						Dari stok obat, distribusi ke klinik mitra, hingga asisten AI yang siap
-						menjawab pertanyaan seputar data — semua terhubung, aman, dan real-time.
+						menjawab pertanyaan seputar data semua terhubung, aman, dan real-time.
 					</p>
 					<div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
 						<Link
