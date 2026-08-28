@@ -4,21 +4,21 @@ Anggota:
 - Sabita Humaira | Ketua
 - Djob Misael | Anggota 1
 
-Pharmasync adalah platform dashboard Supply Chain Management (SCM) medis terintegrasi yang dirancang untuk mengoptimalkan pengelolaan persediaan obat dan rantai pasok klinis secara real-time, transparan, dan efisien.
+Pharmasync adalah platform dashboard Supply Chain Management (SCM) medis terintegrasi yang dirancang untuk mengoptimalkan pengelolaan persediaan obat dan rantai pasok klinis secara real time, transparan, dan efisien.
 
 ## Solusi yang Ditawarkan
-Pharmasync hadir untuk mengatasi permasalahan manajemen logistik farmasi—seperti ketidaktepatan perencanaan, risiko kekosongan obat (stock-out), penumpukan stok (overstock), hingga medication error—melalui platform berbasis web modern dan responsif.
+Pharmasync hadir untuk mengatasi permasalahan manajemen logistik farmasi seperti ketidaktepatan perencanaan, risiko kekosongan obat (stock out), penumpukan stok (overstock), hingga medication error melalui platform berbasis web modern dan responsif.
 
 ## Fitur Utama
 Visualisasi Gudang 3D Imersif: Memantau tata letak fisik rak dan lokasi persediaan obat secara visual menggunakan Three.js & React Three Fiber.
 
-Color-Coded Stock Warning: Peringatan stok berbasis indikator warna instan (Aman, Menipis, Kritis) untuk cegah kelangkaan obat.
+Color Coded Stock Warning: Peringatan stok berbasis indikator warna instan (Aman, Menipis, Kritis) untuk cegah kelangkaan obat.
 
-Live Map Tracking: Pemantauan rute dan armada pengiriman logistik secara real-time berbasis Leaflet.
+Live Map Tracking: Pemantauan rute dan armada pengiriman logistik secara real time berbasis Leaflet.
 
 Integrasi Chatbot Telegram AI: Asisten percakapan berbasis AI (NLP) untuk kueri cepat data persediaan dan pengiriman via perangkat seluler.
 
-Multi-Role Access: Antarmuka disesuaikan khusus untuk Admin Gudang/Farmasi dan Kurir/Driver Logistik.
+Multi Role Access: Antarmuka disesuaikan khusus untuk Admin Gudang/Farmasi dan Kurir/Driver Logistik.
 
 ## Tech Stack
 Frontend: Next.js (App Router, TypeScript), Tailwind CSS, Shadcn UI, Zustand
