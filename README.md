@@ -1,3 +1,31 @@
+TIM: nama tim kamu
+Anggota: Sabita Humaira | Ketua
+         Djob Misael | Anggota 1
+
+Pharmasync adalah platform dashboard Supply Chain Management (SCM) medis terintegrasi yang dirancang untuk mengoptimalkan pengelolaan persediaan obat dan rantai pasok klinis secara real-time, transparan, dan efisien.
+
+## Solusi yang Ditawarkan
+Pharmasync hadir untuk mengatasi permasalahan manajemen logistik farmasi—seperti ketidaktepatan perencanaan, risiko kekosongan obat (stock-out), penumpukan stok (overstock), hingga medication error—melalui platform berbasis web modern dan responsif.
+
+## Fitur Utama
+Visualisasi Gudang 3D Imersif: Memantau tata letak fisik rak dan lokasi persediaan obat secara visual menggunakan Three.js & React Three Fiber.
+
+Color-Coded Stock Warning: Peringatan stok berbasis indikator warna instan (Aman, Menipis, Kritis) untuk cegah kelangkaan obat.
+
+Live Map Tracking: Pemantauan rute dan armada pengiriman logistik secara real-time berbasis Leaflet.
+
+Integrasi Chatbot Telegram AI: Asisten percakapan berbasis AI (NLP) untuk kueri cepat data persediaan dan pengiriman via perangkat seluler.
+
+Multi-Role Access: Antarmuka disesuaikan khusus untuk Admin Gudang/Farmasi dan Kurir/Driver Logistik.
+
+## Tech Stack
+Frontend: Next.js (App Router, TypeScript), Tailwind CSS, Shadcn UI, Zustand
+
+3D & Maps: Three.js / React Three Fiber, Leaflet
+
+Backend & DB: Supabase, PostgreSQL, Prisma ORM, Redis
+
+AI & Integration: Gemini 3.5 Flash, GLM 5.2, Telegram Webhook
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
