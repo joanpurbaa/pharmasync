@@ -1,6 +1,7 @@
 TIM: nama tim kamu
-Anggota: Sabita Humaira | Ketua
-         Djob Misael | Anggota 1
+Anggota: 
+- Sabita Humaira | Ketua
+- Djob Misael | Anggota 1
 
 Pharmasync adalah platform dashboard Supply Chain Management (SCM) medis terintegrasi yang dirancang untuk mengoptimalkan pengelolaan persediaan obat dan rantai pasok klinis secara real-time, transparan, dan efisien.
 
